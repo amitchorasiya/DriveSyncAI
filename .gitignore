@@ -1,0 +1,42 @@
+# IDE & editor config
+.cursor/
+.cursorrules
+.cursorignore
+
+# Memory Bank (project context — not for git)
+memory-bank/
+
+# Agent transcripts
+agent-transcripts/
+
+# Local working copy (project source lives at repo root)
+/DriveSyncAI/
+
+# Blog drafts (published separately)
+blog/
+
+# Build artifacts
+.build/
+dist/
+*.dSYM/
+
+# Xcode
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+DerivedData/
+
+# Swift Package Manager
+.swiftpm/
+Package.resolved
+
+# macOS
+.DS_Store
+._*
+
+# IDE
+*.swp
+*.swo
+*~
+.idea/
+.vscode/

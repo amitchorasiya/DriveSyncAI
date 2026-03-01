@@ -1,0 +1,52 @@
+DriveSyncAI
+Copyright 2026 Amit Chorasiya. All rights reserved.
+
+TRADEMARK NOTICE
+
+"DriveSyncAI" and the DriveSyncAI logo are trademarks of Amit Chorasiya.
+You may not use the DriveSyncAI name, logo, or branding in any modified
+version, derivative work, or redistribution of this software without
+prior written permission from the copyright holder.
+
+If you create a derivative work based on this software, you must choose
+a different name and branding that does not suggest endorsement by or
+affiliation with the original DriveSyncAI project.
+
+LICENSE
+
+This software is licensed under the Business Source License 1.1.
+See the LICENSE file for the full license text.
+
+COMMERCIAL LICENSING
+
+For commercial licensing inquiries, including production use,
+redistribution, or embedding in commercial products, please contact:
+
+  Amit Chorasiya
+  GitHub: https://github.com/amitchorasiya
+
+THIRD-PARTY NOTICES
+
+This software uses the following Apple frameworks under their standard
+terms of use: SwiftUI, CryptoKit, Combine, AppKit, QuickLook,
+QuickLookThumbnailing, IOKit, PDFKit, ImageIO, CoreLocation, Security.
+
+OPTIONAL THIRD-PARTY AI SERVICES
+
+This software can optionally connect to the following third-party AI
+services for AI-powered file organization features. Use of these services
+is entirely optional and user-initiated. Each service is governed by its
+own terms of service and privacy policy:
+
+  - Ollama (local, https://ollama.com) - Runs on your device, no external data transmission
+  - OpenAI API (https://openai.com/policies/terms-of-use)
+  - Anthropic API (https://www.anthropic.com/policies/terms-of-service)
+  - Google Gemini API (https://ai.google.dev/gemini-api/terms)
+  - Perplexity API (https://www.perplexity.ai/hub/legal/terms-of-service)
+
+When using cloud-based providers, only file metadata (file names, paths,
+sizes, types, and document properties) is transmitted. Actual file
+contents are never uploaded or transmitted to any external service.
+
+The Licensor has no affiliation with and assumes no responsibility for
+these third-party services.
