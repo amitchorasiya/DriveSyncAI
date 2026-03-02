@@ -82,6 +82,102 @@ final class OrganizationChatService: ObservableObject {
         messages.append(OrganizationChatMessage(role: "assistant", text: msg, isStatusMessage: true))
     }
 
+    // MARK: - Local Commands
+
+    private static let showPlanAliases: Set<String> = [
+        "show plan", "show the plan", "view plan", "display plan",
+        "what's the plan", "whats the plan", "plan summary", "show summary"
+    ]
+
+    private static let categoryQueryPrefixes = [
+        "show photos", "show videos", "show documents", "show installers",
+        "show music", "show archives", "show cleanup", "show moves for"
+    ]
+
+    private func tryLocalCommand(
+        _ text: String,
+        plan: ReorganizePlan?,
+        analysis: DriveAnalysis?
+    ) -> String? {
+        let lower = text.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if Self.showPlanAliases.contains(lower), let plan = plan {
+            return formatPlanSummary(plan)
+        }
+
+        if let plan = plan {
+            for prefix in Self.categoryQueryPrefixes {
+                if lower.hasPrefix(prefix) {
+                    let category = lower.replacingOccurrences(of: prefix, with: "")
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                    return formatCategoryMoves(plan: plan, query: category.isEmpty ? prefix : category)
+                }
+            }
+        }
+
+        return nil
+    }
+
+    private func formatPlanSummary(_ plan: ReorganizePlan) -> String {
+        var lines: [String] = []
+        lines.append("📋 **Plan Summary**")
+        lines.append("")
+        lines.append("• \(plan.totalAcceptedMoves) file moves accepted")
+        lines.append("• \(plan.totalAcceptedRenames) renames accepted")
+        lines.append("• \(plan.totalAcceptedClutter) cleanup items")
+
+        if plan.estimatedSpaceSaved > 0 {
+            lines.append("• Estimated space saved: \(ByteCountFormatter.string(fromByteCount: plan.estimatedSpaceSaved, countStyle: .file))")
+        }
+
+        let softDeleteCount = plan.clutterActions.filter { $0.accepted && $0.action == .softDelete }.count
+        if softDeleteCount > 0 {
+            lines.append("• \(softDeleteCount) items will be soft-deleted to _Deleted/")
+        }
+
+        lines.append("")
+
+        let grouped = Dictionary(grouping: plan.moveActions.filter(\.accepted)) { move -> String in
+            move.destinationPath.components(separatedBy: "/").first ?? "Other"
+        }
+        if !grouped.isEmpty {
+            lines.append("**Destination folders:**")
+            for (folder, items) in grouped.sorted(by: { $0.value.count > $1.value.count }) {
+                let size = items.reduce(Int64(0)) { $0 + $1.fileSize }
+                lines.append("  📁 \(folder): \(items.count) files (\(ByteCountFormatter.string(fromByteCount: size, countStyle: .file)))")
+            }
+        }
+
+        lines.append("")
+        lines.append("Use the **Overview** tab in the plan view for the full folder tree, or tap **Export Plan** to save a text file.")
+
+        return lines.joined(separator: "\n")
+    }
+
+    private func formatCategoryMoves(plan: ReorganizePlan, query: String) -> String {
+        let lower = query.lowercased()
+        let matchingMoves = plan.moveActions.filter { move in
+            move.accepted && (
+                move.reason.lowercased().contains(lower) ||
+                move.destinationPath.lowercased().contains(lower)
+            )
+        }
+
+        if matchingMoves.isEmpty {
+            return "No matching moves found for \"\(query)\" in the current plan."
+        }
+
+        var lines: [String] = []
+        lines.append("Found \(matchingMoves.count) moves matching \"\(query)\":")
+        for move in matchingMoves.prefix(20) {
+            lines.append("  \(move.fileName) → \(move.destinationPath)")
+        }
+        if matchingMoves.count > 20 {
+            lines.append("  ... and \(matchingMoves.count - 20) more")
+        }
+        return lines.joined(separator: "\n")
+    }
+
     // MARK: - Core Send
 
     @discardableResult
@@ -97,6 +193,13 @@ final class OrganizationChatService: ObservableObject {
 
         messages.append(OrganizationChatMessage(role: "user", text: trimmed))
         conversationHistory.append((role: "user", content: trimmed))
+
+        if let localResponse = tryLocalCommand(trimmed, plan: plan, analysis: analysis) {
+            messages.append(OrganizationChatMessage(role: "assistant", text: localResponse))
+            conversationHistory.append((role: "assistant", content: localResponse))
+            return .empty
+        }
+
         isLoading = true
         lastError = nil
         lastAppliedChangesCount = 0
@@ -204,7 +307,7 @@ final class OrganizationChatService: ObservableObject {
           "shouldReAnalyze": false
         }
 
-        Valid preference fields: folderStructure (byType/byDate/byProject/customRoot), namingConvention (original/lowercase/datePrefixed/customPrefix), duplicatesHandling (skipConflicts/renameConflicts/replaceExisting), scope (fullRecursive/topLevelOnly/maxDepth3).
+        Valid preference fields: folderStructure (byType/byDate/byProject/customRoot/photoTimeline), namingConvention (original/lowercase/datePrefixed/customPrefix), duplicatesHandling (skipConflicts/renameConflicts/replaceExisting), scope (fullRecursive/topLevelOnly/maxDepth3), splitInstallersByPlatform (true/false), useSoftDelete (true/false).
         """
     }
 
@@ -423,6 +526,14 @@ final class OrganizationChatService: ObservableObject {
                 preferences.customRootFolderName = change.value
             case "customNamePrefix":
                 preferences.customNamePrefix = change.value
+            case "splitInstallersByPlatform":
+                preferences.splitInstallersByPlatform = change.value.lowercased() == "true"
+            case "useSoftDelete":
+                preferences.cleanup.useSoftDelete = change.value.lowercased() == "true"
+            case "useExiftool":
+                preferences.useExiftool = change.value.lowercased() == "true"
+            case "generateManifests":
+                preferences.generateManifests = change.value.lowercased() == "true"
             default:
                 break
             }

@@ -8,6 +8,7 @@ enum FolderStructurePreference: String, Codable, CaseIterable {
     case byDate
     case byProject
     case customRoot
+    case photoTimeline
 
     var displayName: String {
         switch self {
@@ -15,6 +16,17 @@ enum FolderStructurePreference: String, Codable, CaseIterable {
         case .byDate: return "By Date"
         case .byProject: return "By Project"
         case .customRoot: return "Custom Root"
+        case .photoTimeline: return "Photo Timeline"
+        }
+    }
+
+    var detailDescription: String {
+        switch self {
+        case .byType: return "Group files by category (Photos/, Videos/, Documents/)"
+        case .byDate: return "Group by date first, then category (2024/March/Photos/)"
+        case .byProject: return "Keep project structure, add category subfolders"
+        case .customRoot: return "Place everything under a custom root folder"
+        case .photoTimeline: return "Photos sorted by Year/Month/Event with smart date detection"
         }
     }
 }
@@ -75,6 +87,7 @@ struct CleanupPreferences: Codable {
     var includeTempFiles: Bool = true
     var includeSystemJunk: Bool = true
     var includeEmptyFolders: Bool = true
+    var useSoftDelete: Bool = true
 }
 
 struct OrganizationPreferences: Codable {
@@ -86,6 +99,10 @@ struct OrganizationPreferences: Codable {
     var scope: OrganizationScopePreference = .fullRecursive
     var customRootFolderName: String = "Organized"
     var customNamePrefix: String = ""
+    var splitInstallersByPlatform: Bool = true
+    var moveEmptiedSourcesToHolding: Bool = true
+    var generateManifests: Bool = true
+    var useExiftool: Bool = true
 
     static let `default` = OrganizationPreferences()
 }

@@ -67,7 +67,7 @@ struct AIOrganizeView: View {
         case .idle:
             return ["Group photos by month", "What folder structures work best?", "How does AI classify files?"]
         case .planReady:
-            return ["Move PDFs to Documents", "Exclude node_modules", "Show cleanup options"]
+            return ["Show plan", "Move PDFs to Documents", "Exclude node_modules", "Show cleanup options"]
         default:
             return []
         }
@@ -369,6 +369,11 @@ struct AIOrganizeView: View {
                         .labelsHidden()
                     }
 
+                    Text(preferencesStore.preferences.folderStructure.detailDescription)
+                        .font(.system(size: 10))
+                        .foregroundStyle(Color.dsTertiaryText)
+                        .padding(.leading, 2)
+
                     if preferencesStore.preferences.folderStructure == .customRoot {
                         TextField("Custom root folder name", text: $preferencesStore.preferences.customRootFolderName)
                             .textFieldStyle(.roundedBorder)
@@ -516,7 +521,51 @@ struct AIOrganizeView: View {
                             icon: "folder.badge.minus",
                             isOn: $preferencesStore.preferences.cleanup.includeEmptyFolders
                         )
+
+                        Divider()
+
+                        cleanupToggle(
+                            title: "Safe delete (non-destructive)",
+                            subtitle: "Move to _Deleted/ preserving folder structure instead of permanent delete",
+                            icon: "trash.slash",
+                            isOn: $preferencesStore.preferences.cleanup.useSoftDelete
+                        )
                     }
+                }
+            }
+
+            // Advanced options
+            GlassCard {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+                    sectionHeader(icon: "gearshape.2.fill", title: "Advanced Options", color: .indigo)
+
+                    cleanupToggle(
+                        title: "Split installers by platform",
+                        subtitle: "Create SW/Windows and SW/Mac sub-folders for installers",
+                        icon: "arrow.down.app",
+                        isOn: $preferencesStore.preferences.splitInstallersByPlatform
+                    )
+
+                    cleanupToggle(
+                        title: "Track emptied source folders",
+                        subtitle: "Move emptied folders to _Sorted_Originals/ for review",
+                        icon: "folder.badge.questionmark",
+                        isOn: $preferencesStore.preferences.moveEmptiedSourcesToHolding
+                    )
+
+                    cleanupToggle(
+                        title: "Generate manifests",
+                        subtitle: "Create before/after file listings for data integrity verification",
+                        icon: "doc.text.magnifyingglass",
+                        isOn: $preferencesStore.preferences.generateManifests
+                    )
+
+                    cleanupToggle(
+                        title: "Use exiftool (if installed)",
+                        subtitle: "Better EXIF extraction for photos — requires 'brew install exiftool'",
+                        icon: "camera.metering.matrix",
+                        isOn: $preferencesStore.preferences.useExiftool
+                    )
                 }
             }
 
@@ -1265,6 +1314,10 @@ struct AIOrganizeView: View {
                 .font(.system(size: 13))
                 .foregroundStyle(Color.dsSecondaryText)
 
+            if let plan = reorganizeService.currentPlan {
+                postExecutionSummary(plan)
+            }
+
             GlassButton("Start New Analysis", icon: "arrow.counterclockwise", style: .secondary) {
                 chatService.clear()
                 reorganizeService.reset()
@@ -1272,6 +1325,57 @@ struct AIOrganizeView: View {
             Spacer()
         }
         .padding(AppTheme.Spacing.xl)
+    }
+
+    private func postExecutionSummary(_ plan: ReorganizePlan) -> some View {
+        GlassCard {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
+                sectionHeader(icon: "list.bullet.clipboard", title: "Execution Summary", color: .green)
+
+                HStack(spacing: AppTheme.Spacing.large) {
+                    summaryPill(icon: "arrow.right.doc.on.clipboard", label: "Moved", count: plan.totalAcceptedMoves)
+                    summaryPill(icon: "pencil", label: "Renamed", count: plan.totalAcceptedRenames)
+                    summaryPill(icon: "paintbrush", label: "Cleaned", count: plan.totalAcceptedClutter)
+                }
+
+                let softDeleted = plan.clutterActions.filter { $0.accepted && $0.action == .softDelete }.count
+                if softDeleted > 0 {
+                    HStack(spacing: 4) {
+                        Image(systemName: "trash.slash")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.orange)
+                        Text("\(softDeleted) items moved to _Deleted/ (safe to review & permanently remove later)")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.dsSecondaryText)
+                    }
+                }
+
+                if !plan.emptiedSourceFolders.isEmpty {
+                    HStack(spacing: 4) {
+                        Image(systemName: "folder.badge.questionmark")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.blue)
+                        Text("\(plan.emptiedSourceFolders.count) emptied folders moved to _Sorted_Originals/")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.dsSecondaryText)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: 500)
+    }
+
+    private func summaryPill(icon: String, label: String, count: Int) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.system(size: 10))
+                .foregroundStyle(Color.dsAction)
+            Text("\(count)")
+                .font(.system(size: 13, weight: .bold))
+            Text(label)
+                .font(.system(size: 11))
+                .foregroundStyle(Color.dsSecondaryText)
+        }
     }
 
     private var failedPhase: some View {

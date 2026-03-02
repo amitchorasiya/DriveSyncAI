@@ -142,8 +142,36 @@ actor DriveAnalyzer {
             }
         }
 
+        analysis.mixedFolders = detectMixedFolders(analysis.categorizedFiles)
         analysis.scanDuration = Date().timeIntervalSince(startTime)
         return analysis
+    }
+
+    private func detectMixedFolders(_ files: [FileMetadataHint]) -> [MixedFolderInfo] {
+        var folderContents: [String: (categories: [FileCategory: Int], files: Int, size: Int64)] = [:]
+
+        for file in files {
+            guard let cat = file.category else { continue }
+            let parentPath = (file.relativePath as NSString).deletingLastPathComponent
+            guard !parentPath.isEmpty else { continue }
+            var entry = folderContents[parentPath] ?? (categories: [:], files: 0, size: 0)
+            entry.categories[cat, default: 0] += 1
+            entry.files += 1
+            entry.size += file.size
+            folderContents[parentPath] = entry
+        }
+
+        let mixedThreshold = 2
+        return folderContents.compactMap { path, info in
+            guard info.categories.count >= mixedThreshold, info.files >= 5 else { return nil }
+            return MixedFolderInfo(
+                folderName: (path as NSString).lastPathComponent,
+                relativePath: path,
+                totalFiles: info.files,
+                categoryBreakdown: info.categories,
+                totalSize: info.size
+            )
+        }.sorted { $0.totalFiles > $1.totalFiles }
     }
 
     // MARK: - Tier 2: Metadata Enrichment
@@ -163,6 +191,39 @@ actor DriveAnalyzer {
                         analysis.categorizedFiles[i].confidence = max(hint.confidence, 0.9)
                     }
                 }
+
+                if analysis.categorizedFiles[i].exifDate == nil {
+                    if let fnDate = dateFromFilename(hint.fileName) {
+                        analysis.categorizedFiles[i].exifDate = fnDate
+                        analysis.categorizedFiles[i].confidence = max(analysis.categorizedFiles[i].confidence, 0.75)
+                    }
+                }
+
+                if analysis.categorizedFiles[i].exifDate == nil {
+                    let (folderDate, eventName) = dateFromFolderName(hint.parentFolder)
+                    if let fd = folderDate {
+                        analysis.categorizedFiles[i].exifDate = fd
+                        analysis.categorizedFiles[i].confidence = max(analysis.categorizedFiles[i].confidence, 0.65)
+                    }
+                    if let en = eventName {
+                        analysis.categorizedFiles[i].eventName = en
+                    }
+                } else {
+                    let (_, eventName) = dateFromFolderName(hint.parentFolder)
+                    if let en = eventName {
+                        analysis.categorizedFiles[i].eventName = en
+                    }
+                }
+
+                if analysis.categorizedFiles[i].exifDate == nil, let mod = hint.modifiedDate {
+                    analysis.categorizedFiles[i].exifDate = mod
+                    analysis.categorizedFiles[i].confidence = max(analysis.categorizedFiles[i].confidence, 0.5)
+                }
+            }
+
+            if hint.category == .installers {
+                let ext = fullPath.pathExtension.lowercased()
+                analysis.categorizedFiles[i].installerPlatform = InstallerPlatform.extensionMap[ext]
             }
 
             if hint.category == .documents {
@@ -210,6 +271,93 @@ actor DriveAnalyzer {
         let promoted = analysis.ambiguousFiles.filter { $0.confidence >= 0.7 }
         analysis.categorizedFiles.append(contentsOf: promoted)
         analysis.ambiguousFiles.removeAll { $0.confidence >= 0.7 }
+    }
+
+    // MARK: - Date Fallbacks
+
+    private static let filenameDatePatterns: [(regex: NSRegularExpression, format: String)] = {
+        let patterns: [(String, String)] = [
+            (#"(\d{4})[\-_](\d{2})[\-_](\d{2})[\-_ ](\d{2})[\-_](\d{2})[\-_](\d{2})"#, "yyyy-MM-dd-HH-mm-ss"),
+            (#"(\d{4})(\d{2})(\d{2})[\-_ ]?(\d{2})(\d{2})(\d{2})"#, "yyyyMMdd-HHmmss"),
+            (#"(\d{4})[\-_](\d{2})[\-_](\d{2})"#, "yyyy-MM-dd"),
+            (#"(\d{2})[\-_](\d{2})[\-_](\d{4})"#, "MM-dd-yyyy"),
+        ]
+        return patterns.compactMap { p in
+            guard let regex = try? NSRegularExpression(pattern: p.0) else { return nil }
+            return (regex, p.1)
+        }
+    }()
+
+    private static let monthNames: [String: Int] = [
+        "january": 1, "february": 2, "march": 3, "april": 4,
+        "may": 5, "june": 6, "july": 7, "august": 8,
+        "september": 9, "october": 10, "november": 11, "december": 12,
+        "jan": 1, "feb": 2, "mar": 3, "apr": 4,
+        "jun": 6, "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12
+    ]
+
+    func dateFromFilename(_ filename: String) -> Date? {
+        let baseName = (filename as NSString).deletingPathExtension
+        for (regex, format) in Self.filenameDatePatterns {
+            let range = NSRange(baseName.startIndex..<baseName.endIndex, in: baseName)
+            if let match = regex.firstMatch(in: baseName, range: range) {
+                let matched = (baseName as NSString).substring(with: match.range)
+                let digits = matched.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+
+                let formatter = DateFormatter()
+                formatter.locale = Locale(identifier: "en_US_POSIX")
+
+                let cleanFormat = format.components(separatedBy: CharacterSet.letters.inverted).joined()
+                formatter.dateFormat = cleanFormat
+                if let date = formatter.date(from: digits) {
+                    let components = Calendar.current.dateComponents([.year], from: date)
+                    if let year = components.year, year >= 1990, year <= 2030 {
+                        return date
+                    }
+                }
+            }
+        }
+        return nil
+    }
+
+    func dateFromFolderName(_ folderName: String) -> (date: Date?, eventName: String?) {
+        let lower = folderName.lowercased()
+        let components = folderName.components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }
+
+        var year: Int?
+        var month: Int?
+        var eventParts: [String] = []
+
+        for comp in components {
+            if let y = Int(comp), y >= 1990, y <= 2030 {
+                year = y
+            } else if let m = Self.monthNames[comp.lowercased()] {
+                month = m
+            } else if Int(comp) == nil {
+                eventParts.append(comp)
+            }
+        }
+
+        if year == nil {
+            let yearRegex = try? NSRegularExpression(pattern: #"\b(19|20)\d{2}\b"#)
+            let range = NSRange(lower.startIndex..<lower.endIndex, in: lower)
+            if let match = yearRegex?.firstMatch(in: lower, range: range) {
+                let matched = (lower as NSString).substring(with: match.range)
+                year = Int(matched)
+            }
+        }
+
+        var date: Date?
+        if let y = year {
+            var dc = DateComponents()
+            dc.year = y
+            dc.month = month ?? 1
+            dc.day = 1
+            date = Calendar.current.date(from: dc)
+        }
+
+        let event = eventParts.isEmpty ? nil : eventParts.joined(separator: " ")
+        return (date, event)
     }
 
     // MARK: - EXIF Extraction

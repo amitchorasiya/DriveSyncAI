@@ -8,9 +8,10 @@ struct ReorganizePlanView: View {
     var highlightedIds: Set<UUID> = []
     var onExecute: (Bool) -> Void
 
-    @State private var selectedSection: PlanSection = .moves
+    @State private var selectedSection: PlanSection = .overview
 
     enum PlanSection: String, CaseIterable {
+        case overview = "Overview"
         case folders = "Folders"
         case moves = "File Moves"
         case renames = "Renames"
@@ -78,6 +79,8 @@ struct ReorganizePlanView: View {
     @ViewBuilder
     private var sectionContent: some View {
         switch selectedSection {
+        case .overview:
+            overviewSection
         case .folders:
             foldersSection
         case .moves:
@@ -87,6 +90,180 @@ struct ReorganizePlanView: View {
         case .cleanup:
             cleanupSection
         }
+    }
+
+    // MARK: - Overview
+
+    private var overviewSection: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+                GlassCard {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "folder.fill")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.blue)
+                            Text("Planned Folder Structure")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(Color.dsPrimaryText)
+                        }
+
+                        let tree = buildFolderTree()
+                        VStack(alignment: .leading, spacing: 2) {
+                            ForEach(tree, id: \.self) { line in
+                                Text(line)
+                                    .font(.system(size: 11, design: .monospaced))
+                                    .foregroundStyle(Color.dsSecondaryText)
+                            }
+                        }
+                    }
+                }
+
+                GlassCard {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "chart.bar.fill")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.purple)
+                            Text("Moves by Category")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(Color.dsPrimaryText)
+                        }
+
+                        let grouped = Dictionary(grouping: plan.moveActions.filter(\.accepted)) { move -> String in
+                            let dest = move.destinationPath
+                            return dest.components(separatedBy: "/").first ?? "Other"
+                        }
+
+                        ForEach(grouped.keys.sorted(), id: \.self) { folder in
+                            let items = grouped[folder]!
+                            let totalSize = items.reduce(Int64(0)) { $0 + $1.fileSize }
+                            HStack {
+                                Image(systemName: "folder.fill")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(.blue)
+                                Text(folder)
+                                    .font(.system(size: 12, weight: .medium))
+                                Spacer()
+                                Text("\(items.count) files")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(Color.dsSecondaryText)
+                                Text(ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file))
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(Color.dsTertiaryText)
+                            }
+                        }
+                    }
+                }
+
+                let softDeleteCount = plan.clutterActions.filter { $0.accepted && $0.action == .softDelete }.count
+                let hardDeleteCount = plan.clutterActions.filter { $0.accepted && $0.action == .delete }.count
+                if softDeleteCount > 0 || hardDeleteCount > 0 {
+                    GlassCard {
+                        VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "trash")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.orange)
+                                Text("Cleanup Summary")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(Color.dsPrimaryText)
+                            }
+
+                            if softDeleteCount > 0 {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "trash.slash")
+                                        .font(.system(size: 10))
+                                        .foregroundStyle(.orange)
+                                    Text("\(softDeleteCount) items → _Deleted/ (recoverable)")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(Color.dsSecondaryText)
+                                }
+                            }
+
+                            if hardDeleteCount > 0 {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "trash")
+                                        .font(.system(size: 10))
+                                        .foregroundStyle(.red)
+                                    Text("\(hardDeleteCount) items → permanent delete")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(Color.dsSecondaryText)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                GlassButton("Export Plan to File", icon: "square.and.arrow.up", style: .secondary) {
+                    exportPlan()
+                }
+                .padding(.horizontal, AppTheme.Spacing.medium)
+            }
+            .padding(AppTheme.Spacing.medium)
+        }
+    }
+
+    private func buildFolderTree() -> [String] {
+        var paths = Set<String>()
+        for folder in plan.folderSuggestions.filter(\.accepted) {
+            paths.insert(folder.path)
+        }
+        for move in plan.moveActions.filter(\.accepted) {
+            let parent = (move.destinationPath as NSString).deletingLastPathComponent
+            if !parent.isEmpty { paths.insert(parent) }
+        }
+
+        var tree: [String] = []
+        for path in paths.sorted() {
+            let depth = path.components(separatedBy: "/").count - 1
+            let indent = String(repeating: "  ", count: depth)
+            let name = (path as NSString).lastPathComponent
+            tree.append("\(indent)📁 \(name)")
+        }
+        return tree
+    }
+
+    private func exportPlan() {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = "reorganize_plan.txt"
+        panel.allowedContentTypes = [.plainText]
+
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        var lines: [String] = []
+        lines.append("DriveSyncAI Reorganization Plan")
+        lines.append("Generated: \(plan.generatedAt.formatted())")
+        if let model = plan.aiModelUsed { lines.append("AI Model: \(model)") }
+        lines.append("")
+
+        lines.append("## Folder Structure (\(plan.folderSuggestions.filter(\.accepted).count) folders)")
+        for folder in plan.folderSuggestions.filter(\.accepted) {
+            lines.append("  CREATE \(folder.path) (\(folder.fileCount) files, \(folder.reason))")
+        }
+        lines.append("")
+
+        lines.append("## File Moves (\(plan.totalAcceptedMoves) moves)")
+        for move in plan.moveActions.filter(\.accepted) {
+            lines.append("  \(move.sourcePath) → \(move.destinationPath)")
+        }
+        lines.append("")
+
+        if !plan.renameSuggestions.filter(\.accepted).isEmpty {
+            lines.append("## Renames (\(plan.totalAcceptedRenames) renames)")
+            for rename in plan.renameSuggestions.filter(\.accepted) {
+                lines.append("  \(rename.originalName) → \(rename.suggestedName)")
+            }
+            lines.append("")
+        }
+
+        lines.append("## Cleanup (\(plan.totalAcceptedClutter) items)")
+        for clutter in plan.clutterActions.filter(\.accepted) {
+            lines.append("  \(clutter.action.displayName): \(clutter.path)")
+        }
+
+        let content = lines.joined(separator: "\n")
+        try? content.write(to: url, atomically: true, encoding: .utf8)
     }
 
     private var foldersSection: some View {
@@ -236,7 +413,7 @@ struct ReorganizePlanView: View {
                         .toggleStyle(.checkbox)
                         .labelsHidden()
                     Image(systemName: clutter.action.icon)
-                        .foregroundStyle(clutter.action == .delete ? Color.dsDestructive : .orange)
+                        .foregroundStyle(clutter.action == .delete ? Color.dsDestructive : (clutter.action == .softDelete ? .orange : .blue))
                         .font(.system(size: 12))
                     VStack(alignment: .leading, spacing: 2) {
                         Text(clutter.path)

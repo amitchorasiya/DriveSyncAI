@@ -33,12 +33,14 @@ enum PlanSource: String, Codable {
 
 enum ClutterActionType: String, Codable, CaseIterable {
     case delete
+    case softDelete
     case archive
     case ignore
 
     var displayName: String {
         switch self {
         case .delete: return "Delete"
+        case .softDelete: return "Move to _Deleted"
         case .archive: return "Move to Archive"
         case .ignore: return "Ignore"
         }
@@ -47,6 +49,7 @@ enum ClutterActionType: String, Codable, CaseIterable {
     var icon: String {
         switch self {
         case .delete: return "trash"
+        case .softDelete: return "trash.slash"
         case .archive: return "archivebox"
         case .ignore: return "eye.slash"
         }
@@ -98,6 +101,7 @@ struct ReorganizePlan {
     var moveActions: [MoveAction] = []
     var renameSuggestions: [RenameSuggestion] = []
     var clutterActions: [ClutterAction] = []
+    var emptiedSourceFolders: [String] = []
     var generatedAt: Date = Date()
     var aiModelUsed: String?
 

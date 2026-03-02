@@ -28,6 +28,8 @@ final class ReorganizeService: ObservableObject {
     private let safetyService: SafetyService
     private let scheduler: AdaptiveScheduler
     private let analyzer: DriveAnalyzer
+    private let manifestService = ManifestService()
+    private let exiftoolService = ExiftoolService()
     private var configManager: LLMConfigManager?
     private var customRulesService: CustomRulesService?
 
@@ -53,14 +55,27 @@ final class ReorganizeService: ObservableObject {
         statusMessage = "Scanning file tree..."
         analysisProgress = 0
 
+        if preferences.generateManifests {
+            statusMessage = "Generating pre-flight manifest..."
+            let manifest = await manifestService.generateManifest(root: root)
+            let manifestURL = root.appendingPathComponent("_reorg_manifest_before.txt")
+            try? await manifestService.saveManifest(manifest, to: manifestURL)
+        }
+
         let rules = customRulesService?.rules ?? []
 
         var analysis = await analyzer.analyzeTier1(root: root, customRules: rules, scope: preferences.scope)
-        analysisProgress = 0.5
+        analysisProgress = 0.4
 
         phase = .enriching
-        statusMessage = "Enriching with EXIF, PDF, and Spotlight metadata..."
 
+        if preferences.useExiftool, await exiftoolService.isAvailable {
+            statusMessage = "Enriching with exiftool batch extraction..."
+            await enrichWithExiftool(analysis: &analysis, root: root)
+            analysisProgress = 0.7
+        }
+
+        statusMessage = "Enriching with EXIF, PDF, and Spotlight metadata..."
         await analyzer.enrichMetadata(analysis: &analysis)
         analysisProgress = 1.0
 
@@ -71,6 +86,30 @@ final class ReorganizeService: ObservableObject {
         currentPlan = plan
 
         phase = .planReady
+    }
+
+    private func enrichWithExiftool(analysis: inout DriveAnalysis, root: URL) async {
+        guard let results = try? await exiftoolService.extractBatch(directory: root) else { return }
+
+        let resultMap = Dictionary(uniqueKeysWithValues: results.map { ($0.filePath, $0) })
+
+        for i in analysis.categorizedFiles.indices {
+            let hint = analysis.categorizedFiles[i]
+            guard hint.category == .photos || hint.category == .videos else { continue }
+
+            let fullPath = root.appendingPathComponent(hint.relativePath).path
+            guard let result = resultMap[fullPath] else { continue }
+
+            if let date = result.dateOriginal, analysis.categorizedFiles[i].exifDate == nil {
+                analysis.categorizedFiles[i].exifDate = date
+                analysis.categorizedFiles[i].confidence = max(analysis.categorizedFiles[i].confidence, 0.95)
+            }
+
+            if let lat = result.gpsLatitude, let lon = result.gpsLongitude,
+               analysis.categorizedFiles[i].exifLocation == nil {
+                analysis.categorizedFiles[i].exifLocation = String(format: "%.4f, %.4f", lat, lon)
+            }
+        }
     }
 
     // MARK: - AI Suggestions (Tier 3)
@@ -195,7 +234,12 @@ final class ReorganizeService: ObservableObject {
         }
 
         for clutter in filteredClutterItems(analysis.clutterItems, cleanup: preferences.cleanup) {
-            let action: ClutterActionType = (clutter.reason == .emptyFolder || clutter.reason == .systemJunk) ? .delete : .archive
+            let action: ClutterActionType
+            if preferences.cleanup.useSoftDelete {
+                action = .softDelete
+            } else {
+                action = (clutter.reason == .emptyFolder || clutter.reason == .systemJunk) ? .delete : .archive
+            }
             plan.clutterActions.append(ClutterAction(
                 path: clutter.relativePath,
                 action: action,
@@ -212,6 +256,11 @@ final class ReorganizeService: ObservableObject {
         categoryFolder: String,
         preferences: OrganizationPreferences
     ) -> String {
+        if file.category == .installers, preferences.splitInstallersByPlatform {
+            let platform = file.installerPlatform ?? .other
+            return "SW/\(platform.displayName)"
+        }
+
         switch preferences.folderStructure {
         case .byType:
             if let date = file.exifDate, file.category == .photos || file.category == .videos {
@@ -235,7 +284,27 @@ final class ReorganizeService: ObservableObject {
             let root = preferences.customRootFolderName.trimmingCharacters(in: .whitespacesAndNewlines)
             let safeRoot = root.isEmpty ? "Organized" : root
             return "\(safeRoot)/\(categoryFolder)"
+        case .photoTimeline:
+            if file.category == .photos || file.category == .videos {
+                return photoTimelineDestination(for: file)
+            }
+            return categoryFolder
         }
+    }
+
+    private func photoTimelineDestination(for file: FileMetadataHint) -> String {
+        let calendar = Calendar.current
+        let date = file.exifDate ?? file.modifiedDate ?? Date()
+        let year = calendar.component(.year, from: date)
+        let month = calendar.component(.month, from: date)
+        let monthName = DateFormatter().monthSymbols[month - 1]
+
+        var path = "Pictures/\(year)/\(monthName)"
+        if let event = file.eventName, !event.isEmpty {
+            let safeName = event.replacingOccurrences(of: "/", with: "-")
+            path += "/\(safeName)"
+        }
+        return path
     }
 
     private func preferredFileName(for file: FileMetadataHint, preferences: OrganizationPreferences) -> String {
@@ -419,11 +488,18 @@ final class ReorganizeService: ObservableObject {
                 let clutterURL = root.appendingPathComponent(clutter.path)
 
                 do {
-                    if clutter.action == .delete {
+                    switch clutter.action {
+                    case .delete:
                         try await safetyService.recordDelete(jobId: jobId, target: clutterURL)
-                    } else if clutter.action == .archive {
+                    case .softDelete:
+                        let deletedURL = root.appendingPathComponent("_Deleted").appendingPathComponent(clutter.path)
+                        try fm.createDirectory(at: deletedURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+                        try await safetyService.recordMove(jobId: jobId, source: clutterURL, destination: deletedURL)
+                    case .archive:
                         let archiveURL = root.appendingPathComponent("Archive").appendingPathComponent(clutter.path)
                         try await safetyService.recordMove(jobId: jobId, source: clutterURL, destination: archiveURL)
+                    case .ignore:
+                        break
                     }
                 } catch {
                     // Error already journaled by SafetyService
@@ -433,12 +509,71 @@ final class ReorganizeService: ObservableObject {
                 executionProgress = Double(completed) / Double(totalActions)
                 statusMessage = "Cleaning up... (\(completed)/\(totalActions))"
             }
+
+            let emptiedFolders = detectEmptiedSourceFolders(plan: plan, root: root)
+            if !emptiedFolders.isEmpty {
+                statusMessage = "Moving emptied source folders to _Sorted_Originals/..."
+                for folderPath in emptiedFolders {
+                    let sourceURL = root.appendingPathComponent(folderPath)
+                    let holdingURL = root.appendingPathComponent("_Sorted_Originals").appendingPathComponent(folderPath)
+                    do {
+                        try fm.createDirectory(at: holdingURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+                        try await safetyService.recordMove(jobId: jobId, source: sourceURL, destination: holdingURL)
+                    } catch {
+                        // Folder may already be gone or non-empty
+                    }
+                }
+                currentPlan?.emptiedSourceFolders = emptiedFolders
+            }
         }
 
         try? await safetyService.completeJob(jobId)
+
+        if !dryRun {
+            statusMessage = "Generating post-flight manifest..."
+            let postManifest = await manifestService.generateManifest(root: root)
+            let postManifestURL = root.appendingPathComponent("_reorg_manifest_after.txt")
+            try? await manifestService.saveManifest(postManifest, to: postManifestURL)
+
+            let preManifestURL = root.appendingPathComponent("_reorg_manifest_before.txt")
+            if let preEntries = try? await manifestService.loadManifest(from: preManifestURL) {
+                let comparison = await manifestService.compare(before: preEntries, after: postManifest)
+                if comparison.isConsistent {
+                    statusMessage = "Reorganization complete! \(completed) actions executed. All files verified."
+                } else {
+                    statusMessage = "Reorganization complete! \(completed) actions executed. \(comparison.summary)"
+                }
+            } else {
+                statusMessage = "Reorganization complete! \(completed) actions executed."
+            }
+        } else {
+            statusMessage = "Dry run complete."
+        }
+
         executionProgress = 1.0
-        statusMessage = dryRun ? "Dry run complete." : "Reorganization complete! \(completed) actions executed."
         phase = .completed
+    }
+
+    private func detectEmptiedSourceFolders(plan: ReorganizePlan, root: URL) -> [String] {
+        let fm = FileManager.default
+        var sourceFolders = Set<String>()
+        for move in plan.moveActions.filter(\.accepted) {
+            let parentPath = (move.sourcePath as NSString).deletingLastPathComponent
+            if !parentPath.isEmpty {
+                sourceFolders.insert(parentPath)
+            }
+        }
+
+        var emptied: [String] = []
+        for folder in sourceFolders.sorted() {
+            let folderURL = root.appendingPathComponent(folder)
+            guard let contents = try? fm.contentsOfDirectory(atPath: folderURL.path) else { continue }
+            let remaining = contents.filter { !$0.hasPrefix(".") }
+            if remaining.isEmpty {
+                emptied.append(folder)
+            }
+        }
+        return emptied
     }
 
     // MARK: - Reset

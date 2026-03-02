@@ -283,7 +283,7 @@ flowchart TB
 git clone https://github.com/amitchorasiya/DriveSyncAI.git
 cd DriveSyncAI
 ./scripts/build_dmg.sh
-open dist/DriveSyncAI-1.0.0.dmg
+open dist/DriveSyncAI-1.1.0.dmg
 ```
 
 ### Option 2: Build from Source

@@ -155,6 +155,27 @@ struct ClutterItem: Identifiable {
     var size: Int64
 }
 
+enum InstallerPlatform: String, Codable, CaseIterable {
+    case windows
+    case mac
+    case other
+
+    var displayName: String {
+        switch self {
+        case .windows: return "Windows"
+        case .mac: return "Mac"
+        case .other: return "Other"
+        }
+    }
+
+    static let extensionMap: [String: InstallerPlatform] = [
+        "exe": .windows, "msi": .windows,
+        "dmg": .mac, "pkg": .mac, "app": .mac,
+        "iso": .other, "deb": .other, "rpm": .other,
+        "snap": .other, "flatpak": .other
+    ]
+}
+
 struct FileMetadataHint: Identifiable, Sendable {
     let id = UUID()
     var relativePath: String
@@ -165,11 +186,22 @@ struct FileMetadataHint: Identifiable, Sendable {
     var confidence: Double = 0
     var exifDate: Date?
     var exifLocation: String?
+    var eventName: String?
+    var installerPlatform: InstallerPlatform?
     var pdfTitle: String?
     var pdfAuthor: String?
     var spotlightContentType: String?
     var firstLineHint: String?
     var parentFolder: String
+}
+
+struct MixedFolderInfo: Identifiable {
+    let id = UUID()
+    var folderName: String
+    var relativePath: String
+    var totalFiles: Int
+    var categoryBreakdown: [FileCategory: Int]
+    var totalSize: Int64
 }
 
 struct DriveAnalysis {
@@ -182,5 +214,6 @@ struct DriveAnalysis {
     var clutterItems: [ClutterItem] = []
     var categorizedFiles: [FileMetadataHint] = []
     var ambiguousFiles: [FileMetadataHint] = []
+    var mixedFolders: [MixedFolderInfo] = []
     var scanDuration: TimeInterval = 0
 }
