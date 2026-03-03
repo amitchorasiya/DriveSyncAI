@@ -8,7 +8,7 @@ import Security
 final class LLMConfigManager: ObservableObject {
     static let defaultLocalModel = "qwen2.5:1.5b-instruct"
 
-    @Published var activeProvider: LLMProviderType = .ollama
+    @Published var activeProvider: LLMProviderType = .llamaCpp
     @Published var activeModel: String = LLMConfigManager.defaultLocalModel
     @Published var isConfigured: Bool = false
     @Published var connectionStatus: ConnectionStatus = .unknown

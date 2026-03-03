@@ -43,6 +43,11 @@ struct DriveSyncAI: App {
                     NSApplication.shared.activate(ignoringOtherApps: true)
                     reorganizeService.setConfigManager(llmConfigManager)
                     reorganizeService.setCustomRulesService(customRulesService)
+                    // Auto-start built-in AI engine if it was previously set up
+                    if llmConfigManager.activeProvider == .llamaCpp
+                        && LlamaCppServerManager.shared.isReady {
+                        Task { await LlamaCppServerManager.shared.start() }
+                    }
                 }
         }
         .windowStyle(.titleBar)

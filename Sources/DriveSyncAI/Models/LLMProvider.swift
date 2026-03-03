@@ -4,6 +4,7 @@
 import Foundation
 
 enum LLMProviderType: String, CaseIterable, Codable, Identifiable {
+    case llamaCpp   // Built-in — no external install required
     case ollama
     case openai
     case anthropic
@@ -14,6 +15,7 @@ enum LLMProviderType: String, CaseIterable, Codable, Identifiable {
 
     var displayName: String {
         switch self {
+        case .llamaCpp: return "Local (Built-in)"
         case .ollama: return "Ollama (Local)"
         case .openai: return "OpenAI"
         case .anthropic: return "Anthropic"
@@ -22,12 +24,22 @@ enum LLMProviderType: String, CaseIterable, Codable, Identifiable {
         }
     }
 
-    var requiresAPIKey: Bool { self != .ollama }
+    var requiresAPIKey: Bool {
+        switch self {
+        case .llamaCpp, .ollama: return false
+        default: return true
+        }
+    }
+
+    var isLocal: Bool {
+        self == .llamaCpp || self == .ollama
+    }
 
     var supportsStructuredOutput: Bool { self != .perplexity }
 
     var defaultBaseURL: String {
         switch self {
+        case .llamaCpp: return LlamaCppServerManager.baseURL
         case .ollama: return "http://localhost:11434"
         case .openai: return "https://api.openai.com"
         case .anthropic: return "https://api.anthropic.com"
@@ -38,6 +50,7 @@ enum LLMProviderType: String, CaseIterable, Codable, Identifiable {
 
     var defaultModel: String {
         switch self {
+        case .llamaCpp: return "qwen2.5:1.5b-instruct"
         case .ollama: return "llama3.2"
         case .openai: return "gpt-4o-mini"
         case .anthropic: return "claude-sonnet-4-20250514"
@@ -48,6 +61,7 @@ enum LLMProviderType: String, CaseIterable, Codable, Identifiable {
 
     var knownModels: [String] {
         switch self {
+        case .llamaCpp: return ["qwen2.5:1.5b-instruct"]
         case .ollama: return OllamaModelCatalog.allModelIDs
         case .openai: return ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"]
         case .anthropic: return ["claude-sonnet-4-20250514", "claude-3-5-haiku-20241022"]
@@ -58,7 +72,8 @@ enum LLMProviderType: String, CaseIterable, Codable, Identifiable {
 
     var privacyNote: String {
         switch self {
-        case .ollama: return "All processing happens on your Mac. No data leaves your device."
+        case .llamaCpp: return "Runs 100% on your Mac via built-in engine. No install needed. No data leaves your device."
+        case .ollama: return "All processing happens on your Mac via Ollama. No data leaves your device."
         default: return "File metadata (names, paths, sizes, types) is sent to \(displayName) servers. File contents are never transmitted."
         }
     }

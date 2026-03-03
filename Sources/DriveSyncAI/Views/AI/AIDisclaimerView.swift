@@ -88,10 +88,10 @@ struct AIDisclaimerView: View {
                     .foregroundStyle(.green)
                     .font(.system(size: 18))
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Ollama (Local)")
+                    Text("Built-in Engine / Ollama (Local)")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(Color.dsPrimaryText)
-                    Text("All processing happens on your Mac. No data leaves your device.")
+                    Text("All processing happens on your Mac. No data leaves your device. The default built-in engine requires no external installation.")
                         .font(.system(size: 12))
                         .foregroundStyle(Color.dsSecondaryText)
                 }

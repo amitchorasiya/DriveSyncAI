@@ -42,7 +42,7 @@ You've tried syncing manually — and accidentally overwrote the wrong version. 
 | **Duplicates** | Find them, delete them, pray | Move to structured folder, full undo, original paths preserved |
 | **Organization** | Manual drag-and-drop for hours | Preferences wizard + interactive AI chat that edits your plan live |
 | **Safety** | "Are you sure?" dialog | Write-ahead journal, verify-after-write, rollback on failure |
-| **Privacy** | Upload your files to their cloud | AI runs locally via Ollama. Nothing leaves your Mac. |
+| **Privacy** | Upload your files to their cloud | AI runs on-device via built-in engine. Nothing leaves your Mac. |
 | **Cost** | $9.99/month forever | Free for personal use. No subscription. Ever. |
 
 ---
@@ -183,11 +183,21 @@ The AI modifies your plan in real time — adding moves, changing destinations, 
 
 The chat works both **before scanning** (to set preferences) and **after scanning** (to refine the plan). Multi-turn conversation keeps context across messages so you can iterate naturally.
 
+### AI Engine — Zero Setup Required
+
+DriveSyncAI ships with a **built-in AI engine** powered by [llama.cpp](https://github.com/ggml-org/llama.cpp). No Ollama, no Python, no Homebrew. Just accept the AI disclaimer in-app and it automatically downloads the engine and model (~986 MB one-time).
+
+- **Engine:** llama.cpp (llama-server) — Metal-accelerated on Apple Silicon
+- **Model:** Qwen 2.5 1.5B Instruct (Q4_K_M GGUF) — Apache 2.0 licensed
+- **Server:** Runs locally on `localhost:8181` — OpenAI-compatible API
+- **Resumable:** Downloads pick up where they left off if interrupted
+
 ### Bring Your Own AI
 
 | Provider | Privacy | Setup |
 |----------|---------|-------|
-| **Ollama** (default) | All local, nothing leaves your Mac | `brew install ollama && ollama pull llama3.2` |
+| **Built-in** (default) | 100% local, nothing leaves your Mac | Automatic — accept disclaimer in-app |
+| **Ollama** | All local, nothing leaves your Mac | `brew install ollama && ollama pull llama3.2` |
 | **OpenAI** | Cloud, metadata only sent | Add API key in Settings |
 | **Anthropic** | Cloud, metadata only sent | Add API key in Settings |
 | **Google Gemini** | Cloud, metadata only sent | Add API key in Settings |
@@ -297,15 +307,11 @@ swift run
 
 **Requirements:** macOS 14+ (Sonoma), Swift 5.9+
 
-### Enable AI (Optional)
+### Enable AI
 
-```bash
-brew install ollama        # Install local AI runtime
-ollama pull llama3.2       # Download recommended model
-ollama serve               # Start the local server
-```
+No setup needed. Launch the app, click any **DriveSyncAI Buddy** panel, accept the AI disclaimer, and the app automatically downloads and starts the built-in AI engine. That's it.
 
-Then flip the AI toggle in **Settings** and you're ready to go. Want to use OpenAI or Anthropic instead? Add your API key — DriveSyncAI supports all major providers.
+Want to use Ollama or a cloud provider instead? Switch anytime in **Settings → AI Provider**.
 
 ---
 

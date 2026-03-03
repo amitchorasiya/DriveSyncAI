@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DriveSyncAI — AI-Powered Drive Manager for macOS</title>
   <meta name="description" content="Sync, deduplicate, and organize your files with AI. Native macOS app. Privacy-first. Free for personal use.">
-  <meta name="keywords" content="macOS, drive sync, file organizer, duplicate finder, AI, local AI, Ollama">
+  <meta name="keywords" content="macOS, drive sync, file organizer, duplicate finder, AI, local AI, llama.cpp, no install required">
   <meta name="author" content="Amit Chorasiya">
   <meta property="og:title" content="DriveSyncAI — AI-Powered Drive Manager for macOS">
   <meta property="og:description" content="Sync, deduplicate, and organize your files with AI. Native macOS. Privacy-first. Free.">
@@ -272,9 +272,9 @@
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
           </div>
           <h3>Privacy First</h3>
-          <p>AI runs locally via Ollama by default. File contents never leave your Mac. Cloud providers only receive compact metadata summaries.</p>
+          <p>AI runs on your Mac via a built-in engine — no Ollama, no Python, no installs. File contents never leave your device. Cloud providers only receive compact metadata summaries.</p>
           <div class="feature-tags">
-            <span>Local AI</span>
+            <span>Built-in AI</span>
             <span>Keychain Storage</span>
             <span>No Telemetry</span>
           </div>
@@ -358,10 +358,15 @@
         <h3 class="providers-title">Bring Your Own AI</h3>
         <div class="providers-grid">
           <div class="provider-card">
+            <div class="provider-icon">⚡</div>
+            <div class="provider-name">Built-in Engine</div>
+            <div class="provider-desc">llama.cpp · No install needed</div>
+            <span class="provider-badge provider-badge-green">Default</span>
+          </div>
+          <div class="provider-card">
             <div class="provider-icon">🦙</div>
             <div class="provider-name">Ollama</div>
-            <div class="provider-desc">Default — 100% local</div>
-            <span class="provider-badge provider-badge-green">Recommended</span>
+            <div class="provider-desc">100% local · 75+ models</div>
           </div>
           <div class="provider-card">
             <div class="provider-icon">
@@ -576,10 +581,8 @@ git clone https://github.com/amitchorasiya/DriveSyncAI.git
 cd DriveSyncAI
 swift build && swift run
 
-<span class="code-comment"># Optional: Enable local AI</span>
-brew install ollama
-ollama pull llama3.2
-ollama serve</code></pre>
+<span class="code-comment"># AI is built-in — no Ollama, no extra setup needed</span>
+<span class="code-comment"># Accept the AI disclaimer in-app and it downloads everything automatically</span></code></pre>
         </div>
       </div>
     </div>

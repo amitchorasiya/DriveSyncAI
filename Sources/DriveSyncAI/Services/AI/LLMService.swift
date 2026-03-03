@@ -431,11 +431,84 @@ final class PerplexityLLMService: LLMServiceProtocol, @unchecked Sendable {
     }
 }
 
+// MARK: - llama.cpp (OpenAI-compatible local server)
+
+/// Connects to the bundled llama-server running on localhost:8181.
+/// Uses the OpenAI-compatible /v1/chat/completions endpoint.
+final class LlamaCppLLMService: LLMServiceProtocol, @unchecked Sendable {
+    private let baseURL: String
+    private let model: String
+    private let session: URLSession
+
+    init(baseURL: String = "http://127.0.0.1:8181/v1", model: String = "qwen2.5:1.5b-instruct") {
+        self.baseURL = baseURL
+        self.model = model
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 120
+        self.session = URLSession(configuration: config)
+    }
+
+    func sendPrompt(system: String, user: String) async throws -> String {
+        let url = URL(string: "\(baseURL)/chat/completions")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: Any] = [
+            "model": model,
+            "messages": [
+                ["role": "system", "content": system],
+                ["role": "user", "content": user]
+            ],
+            "temperature": 0.3,
+            "stream": false
+        ]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await session.data(for: request)
+        guard let http = response as? HTTPURLResponse else {
+            throw LLMError.connectionFailed("No HTTP response from local AI engine")
+        }
+        guard http.statusCode == 200 else {
+            let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw LLMError.apiError(http.statusCode, msg)
+        }
+
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let choices = json["choices"] as? [[String: Any]],
+              let first = choices.first,
+              let message = first["message"] as? [String: Any],
+              let content = message["content"] as? String else {
+            throw LLMError.invalidResponse("Missing choices[0].message.content from local engine")
+        }
+        return content
+    }
+
+    func validateConnection() async -> Bool {
+        guard let url = URL(string: "http://127.0.0.1:8181/health") else { return false }
+        do {
+            let config = URLSessionConfiguration.ephemeral
+            config.timeoutIntervalForRequest = 3
+            let s = URLSession(configuration: config)
+            let (_, response) = try await s.data(from: url)
+            return (response as? HTTPURLResponse)?.statusCode == 200
+        } catch {
+            return false
+        }
+    }
+
+    func availableModels() async throws -> [String] {
+        return LLMProviderType.llamaCpp.knownModels
+    }
+}
+
 // MARK: - Factory
 
 enum LLMServiceFactory {
     static func create(config: LLMProviderConfig, apiKey: String?) -> LLMServiceProtocol {
         switch config.provider {
+        case .llamaCpp:
+            return LlamaCppLLMService(baseURL: config.effectiveBaseURL, model: config.model)
         case .ollama:
             return OllamaLLMService(baseURL: config.effectiveBaseURL, model: config.model)
         case .openai:

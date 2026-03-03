@@ -4,20 +4,16 @@
 import SwiftUI
 import AppKit
 
-/// Shows Ollama/model setup progress after accepting the AI disclaimer.
-/// Presents inline within the disclaimer sheet via content swap.
+/// Shows built-in AI engine + model setup progress after accepting the AI disclaimer.
+/// Three steps: Download engine → Download model → Start server.
 struct AISetupProgressView: View {
-    @StateObject private var setupService = OllamaSetupService()
+    @StateObject private var setupService = LlamaCppSetupService()
     @EnvironmentObject var configManager: LLMConfigManager
 
     let onDone: () -> Void
     let onSkip: () -> Void
 
     @AppStorage("aiEnabled") private var aiEnabled = false
-
-    @State private var adminPassword: String = ""
-    @State private var showAdminSheet = false
-    @State private var autoDismissTask: Task<Void, Never>? = nil
 
     private let accentGradient = LinearGradient(
         colors: [Color(red: 0.38, green: 0.22, blue: 0.82), Color(red: 0.25, green: 0.35, blue: 0.88)],
@@ -30,15 +26,15 @@ struct AISetupProgressView: View {
 
             VStack(spacing: 0) {
                 headerSection
-                    .padding(.bottom, 32)
+                    .padding(.bottom, 28)
 
                 stepsSection
                     .padding(.horizontal, 48)
-                    .padding(.bottom, 28)
+                    .padding(.bottom, 24)
 
                 modelInfoBadge
                     .padding(.horizontal, 48)
-                    .padding(.bottom, 28)
+                    .padding(.bottom, 20)
 
                 errorBanner
                     .padding(.horizontal, 48)
@@ -54,19 +50,13 @@ struct AISetupProgressView: View {
             Task { await setupService.run(configManager: configManager) }
         }
         .onChange(of: setupService.phase) { _, newPhase in
-            if case .needsAdminPassword = newPhase {
-                showAdminSheet = true
-            }
             if case .done = newPhase {
                 aiEnabled = true
-                autoDismissTask = Task {
+                Task {
                     try? await Task.sleep(nanoseconds: 1_500_000_000)
                     onDone()
                 }
             }
-        }
-        .sheet(isPresented: $showAdminSheet) {
-            adminPasswordSheet
         }
     }
 
@@ -83,11 +73,9 @@ struct AISetupProgressView: View {
                     .foregroundStyle(.white)
                     .symbolRenderingMode(.hierarchical)
             }
-
             Text("Setting Up AI")
                 .font(.system(size: 22, weight: .bold))
                 .foregroundStyle(Color.dsPrimaryText)
-
             Text("DriveSyncAI Buddy will be ready in a moment.")
                 .font(.system(size: 13))
                 .foregroundStyle(Color.dsSecondaryText)
@@ -101,24 +89,26 @@ struct AISetupProgressView: View {
         VStack(spacing: 0) {
             stepRow(
                 number: 1,
-                label: "Check Ollama",
-                detail: setupService.ollamaInstalled ? "Installed" : "Not found",
-                stepPhase: stepStatus(for: .checkingOllama)
+                label: "Download AI engine",
+                detail: "llama.cpp · ~6 MB",
+                stepPhase: stepStatus(step: 1),
+                progress: setupService.phase == .downloadingBinary ? setupService.binaryProgress : nil
             )
             stepConnector
             stepRow(
                 number: 2,
-                label: "Validate model",
-                detail: "Checking \(OllamaSetupService.targetModel)",
-                stepPhase: stepStatus(for: .validatingModel)
+                label: "Download AI model",
+                detail: "qwen2.5-1.5b-instruct · ~986 MB · Apache 2.0",
+                stepPhase: stepStatus(step: 2),
+                progress: setupService.phase == .downloadingModel ? setupService.modelProgress : nil
             )
             stepConnector
             stepRow(
                 number: 3,
-                label: "Download model",
-                detail: setupService.statusLine,
-                stepPhase: stepStatus(for: .pullingModel),
-                showProgress: isDownloading
+                label: "Start local server",
+                detail: setupService.phase == .startingServer || setupService.phase == .done
+                    ? setupService.statusLine : "localhost:\(LlamaCppServerManager.port)",
+                stepPhase: stepStatus(step: 3)
             )
         }
     }
@@ -127,33 +117,22 @@ struct AISetupProgressView: View {
         HStack {
             Rectangle()
                 .fill(Color.dsSeparator.opacity(0.4))
-                .frame(width: 1.5, height: 20)
+                .frame(width: 1.5, height: 18)
                 .padding(.leading, 19)
             Spacer()
         }
     }
 
-    private func stepRow(number: Int, label: String, detail: String, stepPhase: StepStatus, showProgress: Bool = false) -> some View {
+    private func stepRow(number: Int, label: String, detail: String, stepPhase: StepStatus, progress: Double? = nil) -> some View {
         HStack(alignment: .top, spacing: 14) {
             stepIndicator(number: number, status: stepPhase)
 
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
-                    Text(label)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Color.dsPrimaryText)
+            VStack(alignment: .leading, spacing: 5) {
+                Text(label)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color.dsPrimaryText)
 
-                    if case .retrying(let n) = setupService.phase, number == 3 {
-                        Text("Retrying… (\(n)/\(OllamaSetupService.maxRetries == 3 ? 3 : 3))")
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(.orange)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 6))
-                    }
-                }
-
-                if showProgress {
+                if let p = progress {
                     VStack(alignment: .leading, spacing: 4) {
                         GeometryReader { geo in
                             ZStack(alignment: .leading) {
@@ -162,13 +141,12 @@ struct AISetupProgressView: View {
                                     .frame(height: 6)
                                 RoundedRectangle(cornerRadius: 4)
                                     .fill(accentGradient)
-                                    .frame(width: geo.size.width * setupService.progress, height: 6)
-                                    .animation(.linear(duration: 0.3), value: setupService.progress)
+                                    .frame(width: geo.size.width * p, height: 6)
+                                    .animation(.linear(duration: 0.3), value: p)
                             }
                         }
                         .frame(height: 6)
-
-                        Text("\(Int(setupService.progress * 100))% complete")
+                        Text("\(Int(p * 100))% complete")
                             .font(.system(size: 11))
                             .foregroundStyle(Color.dsSecondaryText)
                     }
@@ -179,7 +157,6 @@ struct AISetupProgressView: View {
                         .lineLimit(1)
                 }
             }
-
             Spacer()
         }
         .padding(.vertical, 6)
@@ -190,16 +167,13 @@ struct AISetupProgressView: View {
             Circle()
                 .fill(status.bgColor)
                 .frame(width: 28, height: 28)
-
             switch status {
             case .pending:
                 Text("\(number)")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Color.dsSecondaryText)
             case .active:
-                ProgressView()
-                    .controlSize(.small)
-                    .tint(.white)
+                ProgressView().controlSize(.small).tint(.white)
             case .done:
                 Image(systemName: "checkmark")
                     .font(.system(size: 11, weight: .bold))
@@ -220,10 +194,10 @@ struct AISetupProgressView: View {
                 .font(.system(size: 14))
                 .foregroundStyle(Color.dsSecondaryText)
             VStack(alignment: .leading, spacing: 2) {
-                Text(OllamaSetupService.targetModel)
+                Text("qwen2.5-1.5b-instruct · Built-in engine (llama.cpp)")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Color.dsPrimaryText)
-                Text("~986 MB  ·  Apache 2.0  ·  Runs 100% on your Mac")
+                Text("~986 MB total download  ·  Apache 2.0  ·  Runs 100% on your Mac  ·  No Ollama needed")
                     .font(.system(size: 11))
                     .foregroundStyle(Color.dsTertiaryText)
             }
@@ -241,7 +215,7 @@ struct AISetupProgressView: View {
 
     @ViewBuilder
     private var errorBanner: some View {
-        if case .failed(let msg) = setupService.phase, msg != "ollamaNotFound" {
+        if case .failed(let msg) = setupService.phase {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.system(size: 14))
@@ -258,43 +232,7 @@ struct AISetupProgressView: View {
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .stroke(Color.red.opacity(0.25), lineWidth: 0.5)
             )
-        } else if case .failed(let msg) = setupService.phase, msg == "ollamaNotFound" {
-            ollamaNotFoundBanner
         }
-    }
-
-    private var ollamaNotFoundBanner: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.orange)
-                Text("Ollama not installed")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Color.dsPrimaryText)
-            }
-            Text("Ollama is required to run AI locally on your Mac. Download and install it, then tap Retry.")
-                .font(.system(size: 12))
-                .foregroundStyle(Color.dsSecondaryText)
-                .fixedSize(horizontal: false, vertical: true)
-            Button {
-                NSWorkspace.shared.open(URL(string: "https://ollama.com/download/mac")!)
-            } label: {
-                HStack(spacing: 5) {
-                    Image(systemName: "arrow.down.circle")
-                        .font(.system(size: 11, weight: .semibold))
-                    Text("Download Ollama")
-                        .font(.system(size: 12, weight: .semibold))
-                }
-                .foregroundStyle(Color.dsAction)
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(14)
-        .background(Color.orange.opacity(0.07), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .stroke(Color.orange.opacity(0.3), lineWidth: 0.5)
-        )
     }
 
     // MARK: - Footer Buttons
@@ -304,8 +242,7 @@ struct AISetupProgressView: View {
         switch setupService.phase {
         case .done:
             HStack(spacing: 8) {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
+                Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
                 Text("AI setup complete!")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.green)
@@ -324,7 +261,6 @@ struct AISetupProgressView: View {
                         .background(accentGradient, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 }
                 .buttonStyle(.plain)
-
                 Button("Skip for now") { onSkip() }
                     .font(.system(size: 13))
                     .foregroundStyle(Color.dsSecondaryText)
@@ -339,110 +275,48 @@ struct AISetupProgressView: View {
         }
     }
 
-    // MARK: - Admin Password Sheet
+    // MARK: - Step Status Logic
 
-    private var adminPasswordSheet: some View {
-        VStack(spacing: 24) {
-            VStack(spacing: 12) {
-                Image(systemName: "lock.shield.fill")
-                    .font(.system(size: 36))
-                    .foregroundStyle(.purple)
-                Text("Admin Permission Required")
-                    .font(.system(size: 17, weight: .bold))
-                    .foregroundStyle(Color.dsPrimaryText)
-                Text("Ollama needs administrator access to complete the model download on your system.")
-                    .font(.system(size: 13))
-                    .foregroundStyle(Color.dsSecondaryText)
-                    .multilineTextAlignment(.center)
-            }
-
-            SecureField("Enter your Mac admin password", text: $adminPassword)
-                .textFieldStyle(.roundedBorder)
-                .frame(maxWidth: 340)
-
-            HStack(spacing: 16) {
-                Button("Skip") {
-                    showAdminSheet = false
-                    onSkip()
-                }
-                .font(.system(size: 13))
-                .foregroundStyle(Color.dsSecondaryText)
-                .buttonStyle(.plain)
-
-                Button {
-                    let pw = adminPassword
-                    adminPassword = ""
-                    showAdminSheet = false
-                    Task { await setupService.retryWithAdminPassword(pw, configManager: configManager) }
-                } label: {
-                    Text("Authorize & Continue")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 18)
-                        .padding(.vertical, 9)
-                        .background(accentGradient, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                }
-                .buttonStyle(.plain)
-                .disabled(adminPassword.isEmpty)
-            }
-        }
-        .padding(32)
-        .frame(minWidth: 420)
-        .background(Color.dsBackground)
-    }
-
-    // MARK: - Helpers
-
-    private var isDownloading: Bool {
+    private func stepStatus(step: Int) -> StepStatus {
         switch setupService.phase {
-        case .pullingModel, .retrying: return true
-        default: return false
-        }
-    }
-
-    private func stepStatus(for targetPhase: OllamaSetupService.Phase) -> StepStatus {
-        let current = setupService.phase
-
-        switch targetPhase {
-        case .checkingOllama:
-            switch current {
-            case .checkingOllama: return .active
-            case .idle: return .pending
-            default: return setupService.ollamaInstalled ? .done : .error
+        case .idle:
+            return .pending
+        case .fetchingRelease:
+            return step == 1 ? .active : .pending
+        case .downloadingBinary:
+            return step == 1 ? .active : .pending
+        case .downloadingModel:
+            if step == 1 { return .done }
+            return step == 2 ? .active : .pending
+        case .startingServer:
+            if step <= 2 { return .done }
+            return .active
+        case .done:
+            return .done
+        case .failed:
+            // Show error only on the step that was active when failure occurred
+            // Use progress to infer where we got to
+            if setupService.binaryProgress < 1.0 {
+                return step == 1 ? .error : .pending
+            } else if setupService.modelProgress < 1.0 {
+                if step == 1 { return .done }
+                return step == 2 ? .error : .pending
+            } else {
+                if step <= 2 { return .done }
+                return .error
             }
-
-        case .validatingModel:
-            switch current {
-            case .idle, .checkingOllama: return .pending
-            case .validatingModel: return .active
-            case .failed: return .error
-            default: return .done
-            }
-
-        case .pullingModel:
-            switch current {
-            case .idle, .checkingOllama, .validatingModel: return .pending
-            case .pullingModel, .retrying: return .active
-            case .done: return .done
-            case .failed: return .error
-            default: return .pending
-            }
-
-        default: return .pending
         }
     }
 
     enum StepStatus {
         case pending, active, done, error
-
         var bgColor: Color {
             switch self {
             case .pending: return Color.dsSecondaryFill
-            case .active: return Color(red: 0.38, green: 0.22, blue: 0.82)
-            case .done: return .green
-            case .error: return .red
+            case .active:  return Color(red: 0.38, green: 0.22, blue: 0.82)
+            case .done:    return .green
+            case .error:   return .red
             }
         }
     }
 }
-

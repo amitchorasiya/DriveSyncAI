@@ -5,6 +5,7 @@ import SwiftUI
 
 struct LLMSettingsView: View {
     @EnvironmentObject var configManager: LLMConfigManager
+    @StateObject private var serverManager = LlamaCppServerManager.shared
     @State private var apiKeyInput = ""
     @State private var availableModels: [String] = []
     @State private var showingOllamaHelp = false
@@ -77,13 +78,31 @@ struct LLMSettingsView: View {
                                 Text(provider.displayName)
                                     .font(.system(size: 13, weight: .medium))
                                     .foregroundStyle(Color.dsPrimaryText)
-                                if provider == .ollama {
-                                    Text("Recommended")
+
+                                if provider == .llamaCpp {
+                                    Text("Default")
                                         .font(.system(size: 10, weight: .semibold))
                                         .foregroundStyle(.white)
                                         .padding(.horizontal, 6)
                                         .padding(.vertical, 2)
-                                        .background(.green, in: Capsule())
+                                        .background(.purple, in: Capsule())
+                                    // Live server status badge
+                                    if configManager.activeProvider == .llamaCpp {
+                                        HStack(spacing: 3) {
+                                            Circle()
+                                                .fill(serverManager.isRunning ? Color.green : Color.orange)
+                                                .frame(width: 5, height: 5)
+                                            Text(serverManager.isRunning ? "Running" : "Stopped")
+                                                .font(.system(size: 10, weight: .medium))
+                                                .foregroundStyle(serverManager.isRunning ? .green : .orange)
+                                        }
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(
+                                            (serverManager.isRunning ? Color.green : Color.orange).opacity(0.1),
+                                            in: Capsule()
+                                        )
+                                    }
                                 }
                                 if provider == .perplexity {
                                     Text("Basic")
@@ -103,11 +122,20 @@ struct LLMSettingsView: View {
                     }
                     .contentShape(Rectangle())
                     .onTapGesture {
+                        let previous = configManager.activeProvider
+                        // Stop built-in server if switching away
+                        if previous == .llamaCpp && provider != .llamaCpp {
+                            LlamaCppServerManager.shared.stop()
+                        }
                         configManager.activeProvider = provider
                         configManager.activeModel = provider.defaultModel
                         configManager.connectionStatus = .unknown
                         if provider.requiresAPIKey {
                             apiKeyInput = configManager.loadAPIKey(for: provider) ?? ""
+                        }
+                        // Auto-start built-in server if switching to it
+                        if provider == .llamaCpp {
+                            Task { await LlamaCppServerManager.shared.start() }
                         }
                     }
                     .padding(.vertical, 4)
@@ -123,14 +151,16 @@ struct LLMSettingsView: View {
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Color.dsPrimaryText)
 
-                if configManager.activeProvider == .ollama {
+                if configManager.activeProvider == .llamaCpp {
+                    llamaCppConfig
+                } else if configManager.activeProvider == .ollama {
                     ollamaConfig
                 } else {
                     cloudProviderConfig
                 }
 
-                if configManager.activeProvider == .ollama {
-                    ollamaModelSelector
+                if configManager.activeProvider == .llamaCpp || configManager.activeProvider == .ollama {
+                    if configManager.activeProvider == .ollama { ollamaModelSelector }
                 } else {
                     HStack {
                         Text("Model")
@@ -212,6 +242,48 @@ struct LLMSettingsView: View {
             .foregroundStyle(isCopied ? .green : Color.dsAction)
         }
         .buttonStyle(.bordered)
+    }
+
+    private var llamaCppConfig: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+            HStack(spacing: 10) {
+                ZStack {
+                    Circle()
+                        .fill(serverManager.isRunning ? Color.green.opacity(0.12) : Color.orange.opacity(0.12))
+                        .frame(width: 36, height: 36)
+                    Image(systemName: serverManager.isRunning ? "cpu.fill" : "cpu")
+                        .font(.system(size: 16))
+                        .foregroundStyle(serverManager.isRunning ? .green : .orange)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(serverManager.isRunning ? "Engine running on localhost:\(LlamaCppServerManager.port)" : "Engine not running")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(serverManager.isRunning ? Color.dsPrimaryText : Color.dsSecondaryText)
+                    Text(serverManager.statusLine)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.dsTertiaryText)
+                }
+                Spacer()
+                if !serverManager.isRunning && LlamaCppServerManager.shared.isReady {
+                    Button("Start") {
+                        Task { await LlamaCppServerManager.shared.start() }
+                    }
+                    .font(.system(size: 12, weight: .semibold))
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                }
+            }
+            .padding(.vertical, 4)
+
+            HStack {
+                Image(systemName: "info.circle")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.dsSecondaryText)
+                Text("Model: qwen2.5-1.5b-instruct-q4_k_m.gguf · Apache 2.0 · ~986 MB")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.dsTertiaryText)
+            }
+        }
     }
 
     private var ollamaConfig: some View {
