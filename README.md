@@ -73,12 +73,8 @@ You've tried syncing manually — and accidentally overwrote the wrong version. 
 
 ### Intelligent Sync
 
-```mermaid
-flowchart LR
-    A["🔌 Connect\nDrives"] --> B["🔍 Compare\nFiles"]
-    B --> C["👀 Preview\nChanges"]
-    C --> D["✅ Approve &\nExecute"]
-    D --> E["🔒 Verify\n& Journal"]
+```
+Connect Drives → Compare Files → Preview Changes → Approve & Execute → Verify & Journal
 ```
 
 - **Mirror, Update, or Bidirectional** — pick the sync strategy that fits
@@ -89,13 +85,8 @@ flowchart LR
 
 ### Smart Duplicate Finder
 
-```mermaid
-flowchart LR
-    A["📂 Select\nDrive"] --> B["⚡ Quick\nName+Size"]
-    B --> C["🧮 Smart\nPartial Hash"]
-    C --> D["🔐 Deep\nFull SHA256"]
-    D --> E["📋 Review\nResults"]
-    E --> F["📁 Safe Move to\nDuplicates Folder"]
+```
+Select Drive → Quick Scan (name+size) → Smart Partial Hash → Deep SHA256 → Review → Safe Move
 ```
 
 | Scan Mode | Speed | Accuracy | Best For |
@@ -113,28 +104,36 @@ flowchart LR
 
 This is where DriveSyncAI shines. Instead of spending hours dragging files into folders, let AI do the thinking.
 
+```
+Tier 1 — Rules Engine      (60%)  Extension mapping → Clutter detection → Custom user rules
+Tier 2 — Metadata          (25%)  EXIF camera/date/GPS → PDF title/author → Spotlight attributes
+Tier 3 — AI Brain          (15%)  Compact summary to LLM → AI suggests folders, moves, renames
+```
+
+<!--
 ```mermaid
 flowchart TB
-    subgraph Tier1["⚡ Tier 1 — Rules Engine (60% of files)"]
+    subgraph Tier1["Tier 1 — Rules Engine (60% of files)"]
         R1["Extension Mapping"] --> R2["Clutter Detection"]
         R2 --> R3["Custom User Rules"]
     end
 
-    subgraph Tier2["📊 Tier 2 — Metadata Enrichment (25% of files)"]
+    subgraph Tier2["Tier 2 — Metadata Enrichment (25% of files)"]
         M1["EXIF: Camera, Date, GPS"] --> M2["PDF: Title, Author"]
         M2 --> M3["Spotlight Attributes"]
     end
 
-    subgraph Tier3["🧠 Tier 3 — AI Brain (15% of files)"]
-        A1["Compact Summary\nto LLM"] --> A2["AI Suggests:\nFolders, Moves,\nRenames, Cleanup"]
+    subgraph Tier3["Tier 3 — AI Brain (15% of files)"]
+        A1["Compact Summary to LLM"] --> A2["AI Suggests: Folders, Moves, Renames, Cleanup"]
     end
 
     Tier1 --> Tier2
     Tier2 --> Tier3
-    Tier3 --> Review["👤 You Review\nEvery Suggestion"]
-    Review --> Chat["💬 Refine with\nAI Chat"]
-    Chat --> Execute["🔒 Execute with\nFull Safety Journal"]
-```
+    Tier3 --> Review["You Review Every Suggestion"]
+    Review --> Chat["Refine with AI Chat"]
+    Chat --> Execute["Execute with Full Safety Journal"]
+-->
+
 
 **Why this matters:** 85% of your files are organized without touching an AI model. Only truly ambiguous files go to the LLM — as compact metadata, never file contents. This means:
 
@@ -231,14 +230,10 @@ Define your own rules too — pattern-to-folder mappings that run before AI even
 
 **DriveSyncAI was built by someone who lost files to a sync tool.** Every operation goes through a multi-layer safety pipeline:
 
-```mermaid
-flowchart LR
-    Op["File\nOperation"] --> J["📝 Write-Ahead\nJournal"]
-    J --> Ex["⚙️ Execute\nOperation"]
-    Ex --> V["✅ SHA256\nVerification"]
-    V --> Log["📋 Completion\nLog"]
-
-    Ex -->|"Failure"| Rb["↩️ Automatic\nRollback"]
+```
+File Operation → Write-Ahead Journal → Execute → SHA256 Verify → Completion Log
+                                           ↓ (on failure)
+                                      Automatic Rollback
 ```
 
 | Layer | What It Does |
@@ -258,23 +253,11 @@ flowchart LR
 
 DriveSyncAI automatically tunes concurrency based on your hardware and uses low-level OS primitives to squeeze maximum throughput from every operation:
 
-```mermaid
-flowchart TB
-    subgraph CPU["CPU-Bound Pool"]
-        H["SHA256 Hashing"] --> C["All CPU cores utilized"]
-        H --> MM["Memory-mapped I/O\nfor large files (>4MB)"]
-    end
+```
+CPU Pool   SHA256 hashing (all cores, mmap for files >4MB)
+I/O Pool   File copy/move → APFS clonefile() instant clone → cross-volume fallback
 
-    subgraph IO["I/O-Bound Pool"]
-        F["File Copy/Move"] --> CL["APFS clonefile()\ninstant zero-cost clone"]
-        CL -->|"Cross-volume\nfallback"| CP["Standard copyItem"]
-        F --> T["Tuned per drive type"]
-    end
-
-    T --> USB2["USB 2.0: 2 concurrent"]
-    T --> USB3["USB 3.x: 4 concurrent"]
-    T --> TB["Thunderbolt: 6 concurrent"]
-    T --> NV["NVMe: 8 concurrent"]
+Concurrency tuned per drive:  USB 2.0 → 2  |  USB 3.x → 4  |  Thunderbolt → 6  |  NVMe → 8
 ```
 
 - **Memory-mapped hashing** — large files (>4MB) use `mmap` with page-aligned 64MB sliding windows, eliminating kernel buffer copies and syscall overhead
@@ -317,44 +300,15 @@ Want to use Ollama or a cloud provider instead? Switch anytime in **Settings →
 
 ## Architecture
 
-```mermaid
-graph TB
-    subgraph UI["SwiftUI Interface"]
-        D["Dashboard"]
-        SV["Sync View"]
-        DV["Duplicate Finder"]
-        AV["AI Organize"]
-        ST["Settings"]
-    end
-
-    subgraph Core["Core Services"]
-        SS["Sync Service"]
-        DF["Duplicate Finder"]
-        RS["Reorganize Service"]
-        SF["Safety Service"]
-        AS["Adaptive Scheduler"]
-    end
-
-    subgraph AI["AI Pipeline"]
-        DA["Drive Analyzer\n(Tier 1+2)"]
-        LLM["LLM Service\n(Tier 3)"]
-        CR["Custom Rules\nEngine"]
-        CS["Chat Service\n(Refinement)"]
-    end
-
-    SV --> SS
-    DV --> DF
-    AV --> RS
-    AV --> CS
-    RS --> DA
-    RS --> LLM
-    RS --> CR
-    CS --> LLM
-    SS --> SF
-    DF --> SF
-    RS --> SF
-    SS --> AS
-    DF --> AS
+```
+SwiftUI Layer      Dashboard · Sync View · Duplicate Finder · AI Organize · Settings
+       ↓
+Core Services      SyncService · DuplicateFinderService · ReorganizeService
+       ↓                              ↓
+Safety Layer       SafetyService · AdaptiveScheduler · WriteAheadJournal
+       ↓
+AI Pipeline        DriveAnalyzer (Tier 1+2) → LLMService (Tier 3) → ChatService (refinement)
+                   CustomRulesEngine · LlamaCppServerManager · LLMConfigManager
 ```
 
 ---
