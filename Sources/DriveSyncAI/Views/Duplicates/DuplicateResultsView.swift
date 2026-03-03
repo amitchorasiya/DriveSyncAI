@@ -19,6 +19,7 @@ struct DuplicateResultsView: View {
     @State private var showPreview = false
     @State private var showChatPanel = true
     @State private var chatInput = ""
+    @AppStorage("hasAcceptedAIDisclaimer") private var hasAcceptedAIDisclaimer = false
 
     enum ResultsTab: String, CaseIterable {
         case exact = "Exact Duplicates"
@@ -151,6 +152,7 @@ struct DuplicateResultsView: View {
             ],
             onSend: { sendDuplicateChatMessage() },
             onClose: { showChatPanel = false },
+            isDisclaimerAccepted: hasAcceptedAIDisclaimer,
             pendingContent: {
                 if let pending = chatService.pendingResult, pending.hasChanges {
                     duplicateApplyBanner(result: pending)

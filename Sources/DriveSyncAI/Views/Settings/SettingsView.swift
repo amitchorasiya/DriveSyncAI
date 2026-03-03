@@ -30,6 +30,7 @@ struct SettingsView: View {
     @State private var showCustomRules = false
     @State private var showChatPanel = true
     @State private var chatInput = ""
+    @AppStorage("hasAcceptedAIDisclaimer") private var hasAcceptedAIDisclaimer = false
 
     private var syncDirectionBinding: Binding<SyncDirection> {
         Binding(
@@ -117,6 +118,7 @@ struct SettingsView: View {
                         "How do I set up Ollama?",
                         "What does parallel I/O do?",
                     ],
+                    isDisclaimerAccepted: hasAcceptedAIDisclaimer,
                     onSend: { sendSettingsMessage() },
                     onClose: { showChatPanel = false }
                 )

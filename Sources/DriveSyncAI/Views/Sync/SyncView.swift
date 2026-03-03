@@ -19,6 +19,7 @@ struct SyncView: View {
     @State private var showBuddyPanel = true
     @State private var buddyInput = ""
     @StateObject private var buddyChatService = SetupBuddyChatService(screen: .sync)
+    @AppStorage("hasAcceptedAIDisclaimer") private var hasAcceptedAIDisclaimer = false
 
     var body: some View {
         Group {
@@ -71,6 +72,7 @@ struct SyncView: View {
                                 "Should I use parallel?",
                                 "How do filters work?",
                             ],
+                            isDisclaimerAccepted: hasAcceptedAIDisclaimer,
                             onSend: { sendBuddyMessage() },
                             onClose: { showBuddyPanel = false }
                         )

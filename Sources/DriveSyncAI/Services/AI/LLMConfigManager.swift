@@ -6,8 +6,10 @@ import Security
 
 @MainActor
 final class LLMConfigManager: ObservableObject {
+    static let defaultLocalModel = "qwen2.5:1.5b-instruct"
+
     @Published var activeProvider: LLMProviderType = .ollama
-    @Published var activeModel: String = "llama3.2"
+    @Published var activeModel: String = LLMConfigManager.defaultLocalModel
     @Published var isConfigured: Bool = false
     @Published var connectionStatus: ConnectionStatus = .unknown
     @Published var customBaseURL: String?

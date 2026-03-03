@@ -30,6 +30,7 @@ struct SyncPreviewView: View {
     // Chat state
     @State private var showChatPanel = true
     @State private var chatInput = ""
+    @AppStorage("hasAcceptedAIDisclaimer") private var hasAcceptedAIDisclaimer = false
 
     // Undo state
     @State private var undoSnapshot: UndoSnapshot?
@@ -700,6 +701,7 @@ struct SyncPreviewView: View {
             quickActions: syncPreviewQuickActions,
             onSend: { sendChatMessage() },
             onClose: { showChatPanel = false },
+            isDisclaimerAccepted: hasAcceptedAIDisclaimer,
             pendingContent: {
                 if let pending = syncChatService.pendingResult, pending.hasChanges {
                     applyBanner(result: pending)

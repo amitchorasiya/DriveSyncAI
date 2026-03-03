@@ -6,20 +6,30 @@ import AppKit
 
 struct AIDisclaimerView: View {
     @AppStorage("hasAcceptedAIDisclaimer") private var hasAcceptedAIDisclaimer = false
+    @EnvironmentObject var configManager: LLMConfigManager
     @State private var hasAgreed = false
+    @State private var showSetupProgress = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        ZStack {
-            Color.dsBackground.ignoresSafeArea()
+        if showSetupProgress {
+            AISetupProgressView(
+                onDone: { dismiss() },
+                onSkip: { dismiss() }
+            )
+            .environmentObject(configManager)
+        } else {
+            ZStack {
+                Color.dsBackground.ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                header
-                disclaimerContent
-                agreementFooter
+                VStack(spacing: 0) {
+                    header
+                    disclaimerContent
+                    agreementFooter
+                }
+                .frame(maxWidth: 650)
+                .padding(.vertical, AppTheme.Spacing.xl)
             }
-            .frame(maxWidth: 650)
-            .padding(.vertical, AppTheme.Spacing.xl)
         }
     }
 
@@ -139,11 +149,11 @@ struct AIDisclaimerView: View {
                     dismiss()
                 }
 
-                GlassButton("Accept", icon: "checkmark", style: .primary, isDisabled: !hasAgreed) {
+                GlassButton("Accept & Set Up AI", icon: "checkmark", style: .primary, isDisabled: !hasAgreed) {
+                    hasAcceptedAIDisclaimer = true
                     withAnimation(AppTheme.Animation.smooth) {
-                        hasAcceptedAIDisclaimer = true
+                        showSetupProgress = true
                     }
-                    dismiss()
                 }
             }
         }

@@ -22,6 +22,7 @@ struct DashboardView: View {
     @State private var recentActivities: [RecentActivityItem] = []
     @State private var showChatPanel = true
     @State private var chatInput = ""
+    @AppStorage("hasAcceptedAIDisclaimer") private var hasAcceptedAIDisclaimer = false
 
     var body: some View {
         HStack(spacing: 0) {
@@ -71,6 +72,7 @@ struct DashboardView: View {
                         "Which drive has the most space?",
                         "What should I do first?",
                     ],
+                    isDisclaimerAccepted: hasAcceptedAIDisclaimer,
                     onSend: { sendDashboardMessage() },
                     onClose: { showChatPanel = false }
                 )

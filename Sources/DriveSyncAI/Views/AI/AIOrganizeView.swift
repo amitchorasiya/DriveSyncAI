@@ -59,6 +59,7 @@ struct AIOrganizeView: View {
         }
         .sheet(isPresented: $showingAIDisclaimer) {
             AIDisclaimerView()
+                .environmentObject(configManager)
         }
     }
 

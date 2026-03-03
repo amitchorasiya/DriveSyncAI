@@ -14,11 +14,14 @@ struct AIChatPanelView<PendingContent: View, ExtraContent: View>: View {
     let quickActions: [String]
     let onSend: () -> Void
     let onClose: () -> Void
+    var isDisclaimerAccepted: Bool = true
     @ViewBuilder var pendingContent: () -> PendingContent
     @ViewBuilder var extraContent: () -> ExtraContent
 
+    @EnvironmentObject private var configManager: LLMConfigManager
     @FocusState private var isFieldFocused: Bool
     @State private var isExpanded = false
+    @State private var showDisclaimerSheet = false
 
     private let accentGradient = LinearGradient(
         colors: [Color(red: 0.38, green: 0.22, blue: 0.82), Color(red: 0.25, green: 0.35, blue: 0.88)],
@@ -32,8 +35,12 @@ struct AIChatPanelView<PendingContent: View, ExtraContent: View>: View {
         VStack(spacing: 0) {
             drawerHeader
             Divider().opacity(0.4)
-            messageArea
-            inputBar
+            if isDisclaimerAccepted {
+                messageArea
+                inputBar
+            } else {
+                lockedStateView
+            }
         }
         .padding(.bottom, 8)
         .frame(width: panelWidth)
@@ -45,6 +52,11 @@ struct AIChatPanelView<PendingContent: View, ExtraContent: View>: View {
                 .frame(width: 1)
         }
         .animation(.easeInOut(duration: 0.2), value: isExpanded)
+        .sheet(isPresented: $showDisclaimerSheet) {
+            AIDisclaimerView()
+                .environmentObject(configManager)
+                .frame(minWidth: 600, minHeight: 500)
+        }
     }
 
     // MARK: - Drawer Header
@@ -100,6 +112,57 @@ struct AIChatPanelView<PendingContent: View, ExtraContent: View>: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
+    }
+
+    // MARK: - Locked State
+
+    private var lockedStateView: some View {
+        VStack(spacing: 0) {
+            Spacer()
+            VStack(spacing: 20) {
+                ZStack {
+                    Circle()
+                        .fill(Color.dsSecondaryFill.opacity(0.5))
+                        .frame(width: 64, height: 64)
+                    Image(systemName: "lock.shield")
+                        .font(.system(size: 28, weight: .medium))
+                        .foregroundStyle(Color.dsSecondaryText)
+                }
+
+                VStack(spacing: 8) {
+                    Text("AI Features Locked")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Color.dsPrimaryText)
+
+                    Text("Accept the AI disclaimer to enable DriveSyncAI Buddy.")
+                        .font(.system(size: 12.5))
+                        .foregroundStyle(Color.dsSecondaryText)
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(2)
+                        .padding(.horizontal, 20)
+                }
+
+                Button {
+                    showDisclaimerSheet = true
+                } label: {
+                    HStack(spacing: 6) {
+                        Text("Accept AI Terms")
+                            .font(.system(size: 13, weight: .semibold))
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 11, weight: .semibold))
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 9)
+                    .background(accentGradient, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 24)
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.dsSecondaryBackground.opacity(0.35))
     }
 
     // MARK: - Message Area
@@ -379,6 +442,7 @@ extension AIChatPanelView where PendingContent == EmptyView, ExtraContent == Emp
         input: Binding<String>,
         isLoading: Bool,
         quickActions: [String] = [],
+        isDisclaimerAccepted: Bool = true,
         onSend: @escaping () -> Void,
         onClose: @escaping () -> Void
     ) {
@@ -388,6 +452,7 @@ extension AIChatPanelView where PendingContent == EmptyView, ExtraContent == Emp
         self._input = input
         self.isLoading = isLoading
         self.quickActions = quickActions
+        self.isDisclaimerAccepted = isDisclaimerAccepted
         self.onSend = onSend
         self.onClose = onClose
         self.pendingContent = { EmptyView() }

@@ -14,6 +14,7 @@ struct DuplicateFinderView: View {
     @State private var showBuddyPanel = true
     @State private var buddyInput = ""
     @StateObject private var buddyChatService = SetupBuddyChatService(screen: .duplicates)
+    @AppStorage("hasAcceptedAIDisclaimer") private var hasAcceptedAIDisclaimer = false
 
     private var targetDriveURLBinding: Binding<URL?> {
         Binding(
@@ -90,6 +91,7 @@ struct DuplicateFinderView: View {
                         "Smart vs Deep?",
                         "What do categories filter?",
                     ],
+                    isDisclaimerAccepted: hasAcceptedAIDisclaimer,
                     onSend: { sendBuddyMessage() },
                     onClose: { showBuddyPanel = false }
                 )

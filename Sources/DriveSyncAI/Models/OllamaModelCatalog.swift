@@ -359,6 +359,11 @@ enum OllamaModelCatalog {
 
     static let lightweight: [OllamaModel] = [
         OllamaModel(
+            id: "qwen2.5:1.5b-instruct", displayName: "Qwen 2.5 1.5B Instruct",
+            description: "Default local model. Best structured JSON output for its size. Apache 2.0 license. ~986 MB.",
+            sizes: ["1.5B"], category: .lightweight, recommended: true
+        ),
+        OllamaModel(
             id: "phi4-mini", displayName: "Phi-4 Mini",
             description: "Microsoft's smallest Phi-4. Ideal for fast local inference.",
             sizes: ["3.8B"], category: .lightweight, recommended: true
