@@ -44,6 +44,8 @@ struct ContentView: View {
                     DuplicateFinderView()
                 case .aiOrganize:
                     AIOrganizeView()
+                case .askMyDocs:
+                    AskMyDocsView()
                 case .settings:
                     SettingsView()
                 case nil:

@@ -466,4 +466,41 @@ enum OllamaModelCatalog {
     static var allModelIDs: [String] {
         all.map(\.id)
     }
+
+    // MARK: - Document Domain Suitability
+
+    static let domainSuitability: [String: [DocumentDomain: Int]] = [
+        "deepseek-r1": [.financial: 9, .legal: 7, .medical: 6, .technical: 5, .general: 6],
+        "qwq": [.financial: 8, .legal: 7, .medical: 5, .general: 6],
+        "phi4": [.financial: 7, .legal: 6, .medical: 8, .technical: 7, .general: 7],
+        "phi4-reasoning": [.financial: 8, .legal: 7, .medical: 7, .general: 7],
+        "command-r": [.legal: 9, .financial: 6, .medical: 5, .general: 7],
+        "command-r-plus": [.legal: 9, .financial: 7, .medical: 6, .general: 8],
+        "gemma3": [.financial: 7, .legal: 6, .medical: 6, .technical: 7, .general: 8],
+        "llama3.1": [.financial: 6, .legal: 7, .medical: 7, .technical: 6, .academic: 7, .general: 7],
+        "llama3.2": [.financial: 5, .legal: 5, .medical: 5, .general: 6],
+        "llama3.3": [.financial: 7, .legal: 7, .medical: 7, .general: 8],
+        "mixtral": [.financial: 7, .legal: 7, .medical: 6, .general: 7],
+        "mistral-nemo": [.financial: 7, .legal: 7, .medical: 6, .general: 7],
+        "qwen2.5": [.financial: 7, .legal: 6, .medical: 6, .technical: 7, .general: 7],
+        "qwen3": [.financial: 7, .legal: 7, .medical: 6, .general: 8],
+        "qwen2.5vl": [.financial: 5, .legal: 5, .medical: 5, .general: 6],
+        "llava": [.financial: 4, .legal: 4, .medical: 5, .general: 5],
+        "granite3.3": [.financial: 7, .legal: 6, .medical: 5, .technical: 7, .general: 6],
+    ]
+
+    static func suitabilityScore(modelID: String, domain: DocumentDomain) -> Int {
+        domainSuitability[modelID]?[domain] ?? 5
+    }
+
+    static func recommendedModels(for domain: DocumentDomain, limit: Int = 3) -> [OllamaModel] {
+        let scored = all.map { model -> (model: OllamaModel, score: Int) in
+            let score = domainSuitability[model.id]?[domain] ?? 5
+            return (model, score)
+        }
+        return scored
+            .sorted { $0.score > $1.score }
+            .prefix(limit)
+            .map(\.model)
+    }
 }

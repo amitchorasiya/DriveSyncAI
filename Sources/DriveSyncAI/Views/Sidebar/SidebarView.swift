@@ -8,6 +8,7 @@ enum NavigationItem: String, Hashable, CaseIterable {
     case sync
     case duplicates
     case aiOrganize
+    case askMyDocs
     case settings
 
     var label: String {
@@ -16,6 +17,7 @@ enum NavigationItem: String, Hashable, CaseIterable {
         case .sync: return "Sync"
         case .duplicates: return "Duplicates"
         case .aiOrganize: return "AI Organize"
+        case .askMyDocs: return "Ask My Docs"
         case .settings: return "Settings"
         }
     }
@@ -26,6 +28,7 @@ enum NavigationItem: String, Hashable, CaseIterable {
         case .sync: return "arrow.triangle.2.circlepath"
         case .duplicates: return "doc.on.doc"
         case .aiOrganize: return "brain.head.profile"
+        case .askMyDocs: return "doc.text.magnifyingglass"
         case .settings: return "gearshape"
         }
     }
@@ -36,6 +39,7 @@ enum NavigationItem: String, Hashable, CaseIterable {
         case .sync: return "2"
         case .duplicates: return "3"
         case .aiOrganize: return "4"
+        case .askMyDocs: return "5"
         case .settings: return nil
         }
     }
@@ -75,11 +79,11 @@ struct SidebarView: View {
             }
 
             Section("Navigation") {
-                ForEach([NavigationItem.dashboard, .sync, .duplicates, .aiOrganize], id: \.self) { item in
+                ForEach([NavigationItem.dashboard, .sync, .duplicates, .aiOrganize, .askMyDocs], id: \.self) { item in
                     NavigationLink(value: item) {
                         HStack(spacing: 0) {
                             Label(item.label, systemImage: item.icon)
-                            if item == .aiOrganize {
+                            if item == .aiOrganize || item == .askMyDocs {
                                 Spacer()
                                 Text("AI")
                                     .font(.system(size: 9, weight: .bold))
@@ -88,7 +92,7 @@ struct SidebarView: View {
                                     .padding(.vertical, 2)
                                     .background(
                                         LinearGradient(
-                                            colors: [.purple, .blue],
+                                            colors: item == .askMyDocs ? [.orange, .red] : [.purple, .blue],
                                             startPoint: .leading,
                                             endPoint: .trailing
                                         ),
@@ -143,6 +147,8 @@ struct SidebarView: View {
                 .keyboardShortcut("3", modifiers: .command)
             Button("") { selection = .aiOrganize }
                 .keyboardShortcut("4", modifiers: .command)
+            Button("") { selection = .askMyDocs }
+                .keyboardShortcut("5", modifiers: .command)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .hidden()

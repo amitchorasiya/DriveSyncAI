@@ -159,6 +159,7 @@ DriveSyncAI Buddy is an integrated side-drawer assistant that lives inside every
 | **Sync** | "Sync only photos" · "Deselect all videos" · "Show stats" · "Mirror vs Update?" |
 | **Duplicates** | "Keep the newest copies" · "Select photos only" · "Select files > 10MB" |
 | **AI Organize** | "Group photos by month" · "Move invoices to Finance/2024" · "Exclude node_modules" |
+| **Ask My Docs** | "What were my total expenses?" · "List all income sources" · "Compare these documents" · "Summarize this contract" |
 | **Settings** | "Recommend settings for me" · "How do I set up Ollama?" · "What does parallel I/O do?" |
 
 The Buddy adapts its context to whatever you're doing. During sync preview, it can select/deselect files by category, extension, folder, size, or date. During duplicate review, it applies smart selection strategies. During organization, it modifies your plan in real time with highlighted changes.
@@ -179,6 +180,17 @@ After scanning, the AI chat opens alongside your plan. Tell it what you want in 
 - *"Rename all invoice files with a date prefix"*
 
 The AI modifies your plan in real time — adding moves, changing destinations, excluding files, or triggering a full re-analysis when you change strategy. Changed items are highlighted in the plan view. You can also save the AI's suggestions as reusable custom rules.
+
+### Ask My Docs — Document Intelligence & Cross-Reference
+
+Point to any folder of documents and ask questions in natural language. The system extracts full text (with OCR for scanned documents), classifies the document domain, recommends the best AI model, and returns structured answers with source citations.
+
+- **Multi-format extraction** — PDFs, scanned images (OCR), Word, Excel, CSV, plain text
+- **PII Protection** — SSNs, credit cards, bank accounts, and other sensitive data are automatically detected and redacted before reaching the AI model. Two sensitivity levels (Standard / Maximum). Luhn validation, SSN format checks, and keyword-proximity matching for high accuracy.
+- **Smart Model Advisor** — detects if your documents are financial, legal, medical, etc. and recommends the best Ollama or cloud model
+- **Document Cross-Reference** — compare a primary document against source documents to highlight value differences, surface patterns, flag items that may need additional records, and compare versions year-over-year
+- **Report generation** — export results as PDF, CSV, or Markdown
+- **Multi-folder sources** — add multiple folders and drives as document sources
 
 The chat works both **before scanning** (to set preferences) and **after scanning** (to refine the plan). Multi-turn conversation keeps context across messages so you can iterate naturally.
 

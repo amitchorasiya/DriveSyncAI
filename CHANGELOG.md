@@ -2,6 +2,60 @@
 
 All notable changes to DriveSyncAI will be documented in this file.
 
+## [1.3.0] - 2026-03-01
+
+### Added
+
+- **Ask My Docs**: New top-level section (Cmd+5) for document intelligence and Q&A. Point to any folder of documents and ask natural language questions — the system extracts full text, analyzes content, and returns structured insights with source citations.
+
+- **Multi-Format Text Extraction**: Extracts text from PDFs (digital and scanned), images (JPG, PNG, HEIC, TIFF), Word documents (DOCX via textutil), Excel spreadsheets (XLSX via CoreXLSX), CSV files, and plain text files.
+
+- **OCR for Scanned Documents**: Automatic OCR via Apple Vision framework with `.accurate` recognition level. Scanned PDFs are auto-detected when digital text is sparse (< 50 chars/page) and each page is rendered and OCR'd. Confidence-based filtering removes low-quality artifacts.
+
+- **Smart Model Advisor**: After scanning documents, the system classifies the document domain (Financial, Legal, Medical, Technical, Academic) using weighted keyword analysis and recommends the most suitable LLM model. Checks installed Ollama models and offers one-click switch or pull. Advisory only — never auto-switches.
+
+- **Document Cross-Reference**: Compare a primary document against a collection of source documents to highlight differences, surface patterns, and flag items that may warrant a closer look. Four-layer analysis pipeline:
+  - Layer 1: Value comparison — compares line items across documents
+  - Layer 2: Pattern highlights — surfaces data points present in source documents but not in the primary
+  - Layer 3: Documentation checklist — flags items that may benefit from additional records
+  - Layer 4: Year-over-year comparison — compares two versions of similar documents for significant changes
+
+- **Report Generation**: Export analysis results in three formats:
+  - PDF (formatted via HTML + WKWebView with professional styling, tables, and citations)
+  - CSV/Excel (structured data points with headers)
+  - Markdown (formatted summary ready for sharing)
+
+- **Multi-Folder Document Sources**: Add multiple folders and drives as document sources. Sources are tracked independently with per-source scan status. Incremental re-scanning supported.
+
+- **Domain-Aware Chat**: Dedicated chat service with domain-specific system prompts (financial, legal, medical, general). Conversation memory maintains last 10 turns for follow-up questions. Local commands available ("show documents", "show findings", "help").
+
+- **PII Protection Layer**: Automatic detection and redaction of sensitive personal information before any data reaches the AI model:
+  - SSN, credit card, bank account, routing number detection with validation (Luhn, format checks)
+  - Indian PAN / Aadhaar format validation
+  - Credential detection (passwords, PINs, tokens)
+  - Two sensitivity levels: Standard and Maximum (adds phone, email, DOB redaction)
+  - PII toggle with real-time shield indicator and post-scan redaction summary
+  - Forced ON for document comparison mode — cannot be disabled when cross-referencing sensitive documents
+  - Pre-upload detection warning when documents contain sensitive data
+  - LLM system prompts updated to acknowledge and respect redacted placeholders
+
+- **Disclaimers**: Comprehensive disclaimer framework for document analysis features — informational tool only, not professional advice. Non-dismissable banners, first-use consent gate, disclaimers embedded in all exported reports.
+
+### Changed
+
+- **OllamaModelCatalog**: Added domain suitability scoring for key models with `recommendedModels(for:)` query method.
+- **Navigation**: Added "Ask My Docs" to sidebar with `doc.text.magnifyingglass` icon and Cmd+5 shortcut.
+- **Package.swift**: Added CoreXLSX dependency (0.14.0+) for Excel file parsing.
+
+### Technical
+
+- 10 new service and view files for the Ask My Docs feature
+- Modified: `SidebarView.swift`, `ContentView.swift`, `Package.swift`, `OllamaModelCatalog.swift`
+- Context-aware chunking: Small corpora (< 50K chars) processed in single LLM pass; large corpora use map-reduce strategy
+- Structured form-to-line-item mapping for common document types
+
+---
+
 ## [1.1.0] - 2026-03-01
 
 ### Added
