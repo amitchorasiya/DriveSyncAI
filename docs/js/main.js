@@ -1,5 +1,5 @@
 /* ============================================================
-   DriveSyncAI — Futuristic Landing Page Scripts
+   DriveSyncAI landing page scripts
    ============================================================ */
 
 (function () {

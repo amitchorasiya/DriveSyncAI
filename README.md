@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="screenshots/dashboard_buddy.png" alt="DriveSyncAI — Dashboard with AI Buddy" width="780">
+  <img src="screenshots/dashboard_buddy.png" alt="DriveSyncAI dashboard with AI Buddy" width="780">
 </p>
 
 <h1 align="center">🧠 DriveSyncAI</h1>
 
 <p align="center">
-  <strong>The AI-native drive manager with a built-in assistant that syncs, deduplicates, and organizes your files — all through natural conversation.</strong>
+  <strong>The AI-native drive manager with a built-in assistant that syncs, deduplicates, and organizes your files, all through natural conversation.</strong>
 </p>
 
 <p align="center">
@@ -27,7 +27,7 @@
 
 You've got terabytes spread across external drives. Photos from 2015 mixed with tax returns. Three copies of the same vacation folder. A `Downloads` folder that looks like a digital junk drawer.
 
-You've tried syncing manually — and accidentally overwrote the wrong version. You've tried duplicate finders — but they couldn't tell which copy to keep. You've wished someone would just... organize it all for you.
+You've tried syncing manually and accidentally overwrote the wrong version. You've tried duplicate finders but they couldn't tell which copy to keep. You've wished someone would just... organize it all for you.
 
 **DriveSyncAI does exactly that.**
 
@@ -37,7 +37,7 @@ You've tried syncing manually — and accidentally overwrote the wrong version. 
 
 | | Other Tools | DriveSyncAI |
 |---|---|---|
-| **AI Assistant** | None, or a separate window you forget about | Built-in Buddy on every tab — ask questions, control features, get suggestions |
+| **AI Assistant** | None, or a separate window you forget about | Built-in Buddy on every tab. Ask questions, control features, get suggestions. |
 | **Sync** | Blind copy, hope for the best | Preview every action, journal every write, verify with SHA256 |
 | **Duplicates** | Find them, delete them, pray | Move to structured folder, full undo, original paths preserved |
 | **Organization** | Manual drag-and-drop for hours | Preferences wizard + interactive AI chat that edits your plan live |
@@ -51,19 +51,19 @@ You've tried syncing manually — and accidentally overwrote the wrong version. 
 
 <table>
   <tr>
-    <td align="center" colspan="2"><img src="screenshots/dashboard_buddy.png" alt="Dashboard with AI Buddy" width="780"><br><strong>DriveSyncAI Buddy</strong> — Your AI assistant lives right inside the app as an integrated side drawer. Ask questions, get suggestions, and control every feature through natural conversation.</td>
+    <td align="center" colspan="2"><img src="screenshots/dashboard_buddy.png" alt="Dashboard with AI Buddy" width="780"><br><strong>DriveSyncAI Buddy.</strong> Your AI assistant lives right inside the app as an integrated side drawer. Ask questions, get suggestions, and control every feature through natural conversation.</td>
   </tr>
   <tr>
-    <td align="center"><img src="screenshots/onboarding.png" alt="Welcome" width="480"><br><strong>Welcome</strong> — AI-branded onboarding experience</td>
-    <td align="center"><img src="screenshots/dashboard.png" alt="Dashboard" width="480"><br><strong>Dashboard</strong> — Your drives at a glance</td>
+    <td align="center"><img src="screenshots/onboarding.png" alt="Welcome" width="480"><br><strong>Welcome.</strong> AI-branded onboarding experience.</td>
+    <td align="center"><img src="screenshots/dashboard.png" alt="Dashboard" width="480"><br><strong>Dashboard.</strong> Your drives at a glance.</td>
   </tr>
   <tr>
-    <td align="center"><img src="screenshots/sync.png" alt="Sync" width="480"><br><strong>Sync</strong> — Choose source, target, and direction</td>
-    <td align="center"><img src="screenshots/duplicates.png" alt="Duplicates" width="480"><br><strong>Duplicates</strong> — Scan by Quick, Smart, or Deep mode</td>
+    <td align="center"><img src="screenshots/sync.png" alt="Sync" width="480"><br><strong>Sync.</strong> Choose source, target, and direction.</td>
+    <td align="center"><img src="screenshots/duplicates.png" alt="Duplicates" width="480"><br><strong>Duplicates.</strong> Scan by Quick, Smart, or Deep mode.</td>
   </tr>
   <tr>
-    <td align="center"><img src="screenshots/ai_organize.png" alt="AI Organize" width="480"><br><strong>AI Organize</strong> — Intelligent file reorganization</td>
-    <td align="center"><img src="screenshots/settings.png" alt="Settings" width="480"><br><strong>Settings</strong> — AI features, safety, and appearance</td>
+    <td align="center"><img src="screenshots/ai_organize.png" alt="AI Organize" width="480"><br><strong>AI Organize.</strong> Intelligent file reorganization.</td>
+    <td align="center"><img src="screenshots/settings.png" alt="Settings" width="480"><br><strong>Settings.</strong> AI features, safety, and appearance.</td>
   </tr>
 </table>
 
@@ -77,11 +77,11 @@ You've tried syncing manually — and accidentally overwrote the wrong version. 
 Connect Drives → Compare Files → Preview Changes → Approve & Execute → Verify & Journal
 ```
 
-- **Mirror, Update, or Bidirectional** — pick the sync strategy that fits
-- **Conflict resolution** — keep newest, keep both, or decide per-file
-- **Filter rules** — skip `.git`, `node_modules`, temp files automatically
-- **Sync profiles** — save configurations for repeated workflows
-- **Versioning** — automatic backups before any overwrite (trash, timestamped, or numbered)
+- **Mirror, Update, or Bidirectional.** Pick the sync strategy that fits.
+- **Conflict resolution.** Keep newest, keep both, or decide per-file.
+- **Filter rules.** Skip `.git`, `node_modules`, temp files automatically.
+- **Sync profiles.** Save configurations for repeated workflows.
+- **Versioning.** Automatic backups before any overwrite (trash, timestamped, or numbered).
 
 ### Smart Duplicate Finder
 
@@ -95,19 +95,19 @@ Select Drive → Quick Scan (name+size) → Smart Partial Hash → Deep SHA256 �
 | **Smart** | Minutes | Very High | Partial hash, then full SHA256 for matches |
 | **Deep** | Thorough | Perfect | Full SHA256 of every file |
 
-- **Category filters** — scan only photos, videos, documents, music, or archives
-- **Similar file detection** — catches near-duplicates by name, size, and date
-- **Safe move** — duplicates go to `Duplicates/` with original folder structure preserved
-- **Full undo** — one click to restore everything back exactly where it was
+- **Category filters.** Scan only photos, videos, documents, music, or archives.
+- **Similar file detection.** Catches near-duplicates by name, size, and date.
+- **Safe move.** Duplicates go to `Duplicates/` with original folder structure preserved.
+- **Full undo.** One click to restore everything back exactly where it was.
 
 ### AI-Powered File Organization
 
 This is where DriveSyncAI shines. Instead of spending hours dragging files into folders, let AI do the thinking.
 
 ```
-Tier 1 — Rules Engine      (60%)  Extension mapping → Clutter detection → Custom user rules
-Tier 2 — Metadata          (25%)  EXIF camera/date/GPS → PDF title/author → Spotlight attributes
-Tier 3 — AI Brain          (15%)  Compact summary to LLM → AI suggests folders, moves, renames
+Tier 1: Rules Engine       (60%)  Extension mapping → Clutter detection → Custom user rules
+Tier 2: Metadata           (25%)  EXIF camera/date/GPS → PDF title/author → Spotlight attributes
+Tier 3: AI Brain           (15%)  Compact summary to LLM → AI suggests folders, moves, renames
 ```
 
 <!--
@@ -135,7 +135,7 @@ flowchart TB
 -->
 
 
-**Why this matters:** 85% of your files are organized without touching an AI model. Only truly ambiguous files go to the LLM — as compact metadata, never file contents. This means:
+**Why this matters:** 85% of your files are organized without touching an AI model. Only truly ambiguous files go to the LLM, as compact metadata, never file contents. This means:
 
 - Minimal token usage (saves money with cloud providers)
 - Maximum privacy (file contents never leave your disk)
@@ -143,13 +143,13 @@ flowchart TB
 
 **You approve everything.** Every folder suggestion, file move, rename, and cleanup action appears in a checklist. Nothing happens until you say so.
 
-### DriveSyncAI Buddy — Your Built-In AI Assistant
+### DriveSyncAI Buddy: Your Built-In AI Assistant
 
 <p align="center">
   <img src="screenshots/dashboard_buddy.png" alt="DriveSyncAI Buddy" width="640">
 </p>
 
-DriveSyncAI Buddy is an integrated side-drawer assistant that lives inside every tab of the app. It's not a bolted-on chatbot — it's woven into the core experience. Open it with one click, ask questions in natural language, and watch it take action.
+DriveSyncAI Buddy is an integrated side-drawer assistant that lives inside every tab of the app. It's not a bolted-on chatbot. It's woven into the core experience. Open it with one click, ask questions in natural language, and watch it take action.
 
 **What the Buddy can do on each tab:**
 
@@ -165,10 +165,10 @@ DriveSyncAI Buddy is an integrated side-drawer assistant that lives inside every
 The Buddy adapts its context to whatever you're doing. During sync preview, it can select/deselect files by category, extension, folder, size, or date. During duplicate review, it applies smart selection strategies. During organization, it modifies your plan in real time with highlighted changes.
 
 **Key design decisions:**
-- **Integrated, not floating** — the Buddy opens as a side drawer that's part of the layout, not a popup overlay
-- **Context-aware** — suggestions and quick actions change based on your current tab and state
-- **Expandable** — click the resize button to widen the panel for longer conversations
-- **Always available** — the Buddy is present on every screen, from initial setup to final review
+- **Integrated, not floating.** The Buddy opens as a side drawer that's part of the layout, not a popup overlay.
+- **Context-aware.** Suggestions and quick actions change based on your current tab and state.
+- **Expandable.** Click the resize button to widen the panel for longer conversations.
+- **Always available.** The Buddy is present on every screen, from initial setup to final review.
 
 ### Interactive AI Chat
 
@@ -179,35 +179,35 @@ After scanning, the AI chat opens alongside your plan. Tell it what you want in 
 - *"Group photos by month instead of type"*
 - *"Rename all invoice files with a date prefix"*
 
-The AI modifies your plan in real time — adding moves, changing destinations, excluding files, or triggering a full re-analysis when you change strategy. Changed items are highlighted in the plan view. You can also save the AI's suggestions as reusable custom rules.
+The AI modifies your plan in real time: adding moves, changing destinations, excluding files, or triggering a full re-analysis when you change strategy. Changed items are highlighted in the plan view. You can also save the AI's suggestions as reusable custom rules.
 
-### Ask My Docs — Document Intelligence & Cross-Reference
+### Ask My Docs: Document Intelligence & Cross-Reference
 
 Point to any folder of documents and ask questions in natural language. The system extracts full text (with OCR for scanned documents), classifies the document domain, recommends the best AI model, and returns structured answers with source citations.
 
-- **Multi-format extraction** — PDFs, scanned images (OCR), Word, Excel, CSV, plain text
-- **PII Protection** — SSNs, credit cards, bank accounts, and other sensitive data are automatically detected and redacted before reaching the AI model. Two sensitivity levels (Standard / Maximum). Luhn validation, SSN format checks, and keyword-proximity matching for high accuracy.
-- **Smart Model Advisor** — detects if your documents are financial, legal, medical, etc. and recommends the best Ollama or cloud model
-- **Document Cross-Reference** — compare a primary document against source documents to highlight value differences, surface patterns, flag items that may need additional records, and compare versions year-over-year
-- **Report generation** — export results as PDF, CSV, or Markdown
-- **Multi-folder sources** — add multiple folders and drives as document sources
+- **Multi-format extraction.** PDFs, scanned images (OCR), Word, Excel (XLSX), CSV, plain text.
+- **PII Protection.** SSNs, credit cards, bank accounts, and other sensitive data are automatically detected and redacted before reaching the AI model. Two sensitivity levels (Standard / Maximum). Luhn validation, SSN format checks, and keyword-proximity matching for high accuracy.
+- **Smart Model Advisor.** Detects if your documents are financial, legal, medical, etc. and recommends the best Ollama or cloud model. Pull & Switch for Ollama; Install Ollama prompt when not installed.
+- **Document Cross-Reference.** Compare a primary document against source documents to highlight value differences, surface patterns, flag items that may need additional records, and compare versions year-over-year.
+- **Report generation.** Export results as PDF, CSV, or Markdown.
+- **Multi-folder sources.** Add multiple folders and drives as document sources.
 
 The chat works both **before scanning** (to set preferences) and **after scanning** (to refine the plan). Multi-turn conversation keeps context across messages so you can iterate naturally.
 
-### AI Engine — Zero Setup Required
+### AI Engine: Zero Setup Required
 
 DriveSyncAI ships with a **built-in AI engine** powered by [llama.cpp](https://github.com/ggml-org/llama.cpp). No Ollama, no Python, no Homebrew. Just accept the AI disclaimer in-app and it automatically downloads the engine and model (~986 MB one-time).
 
-- **Engine:** llama.cpp (llama-server) — Metal-accelerated on Apple Silicon
-- **Model:** Qwen 2.5 1.5B Instruct (Q4_K_M GGUF) — Apache 2.0 licensed
-- **Server:** Runs locally on `localhost:8181` — OpenAI-compatible API
+- **Engine:** llama.cpp (llama-server). Metal-accelerated on Apple Silicon.
+- **Model:** Qwen 2.5 1.5B Instruct (Q4_K_M GGUF). Apache 2.0 licensed.
+- **Server:** Runs locally on `localhost:8181`. OpenAI-compatible API.
 - **Resumable:** Downloads pick up where they left off if interrupted
 
 ### Bring Your Own AI
 
 | Provider | Privacy | Setup |
 |----------|---------|-------|
-| **Built-in** (default) | 100% local, nothing leaves your Mac | Automatic — accept disclaimer in-app |
+| **Built-in** (default) | 100% local, nothing leaves your Mac | Automatic. Accept disclaimer in-app. |
 | **Ollama** | All local, nothing leaves your Mac | `brew install ollama && ollama pull llama3.2` |
 | **OpenAI** | Cloud, metadata only sent | Add API key in Settings |
 | **Anthropic** | Cloud, metadata only sent | Add API key in Settings |
@@ -216,7 +216,7 @@ DriveSyncAI ships with a **built-in AI engine** powered by [llama.cpp](https://g
 
 #### 75+ Ollama Models Built In
 
-DriveSyncAI ships with a complete model browser covering every major open-source model on Ollama — organized by category with one-click `ollama pull` command copy:
+DriveSyncAI ships with a complete model browser covering every major open-source model on Ollama, organized by category with one-click `ollama pull` command copy:
 
 <p align="center">
   <img src="screenshots/ollama_models.png" alt="Ollama Model Browser" width="640">
@@ -230,11 +230,11 @@ DriveSyncAI ships with a complete model browser covering every major open-source
 
 **Vision:** LLaVA, Llama 3.2 Vision, Qwen3 VL, MiniCPM-V, Moondream, Gemma 3n
 
-**Lightweight:** Phi-4 Mini, SmolLM 2, TinyLlama, LFM 2 — perfect for older Macs
+**Lightweight:** Phi-4 Mini, SmolLM 2, TinyLlama, LFM 2. Perfect for older Macs.
 
 **Multilingual:** Aya (100+ languages), Yi, Sailor 2
 
-Define your own rules too — pattern-to-folder mappings that run before AI even kicks in.
+Define your own rules too: pattern-to-folder mappings that run before AI even kicks in.
 
 ---
 
@@ -250,7 +250,7 @@ File Operation → Write-Ahead Journal → Execute → SHA256 Verify → Complet
 
 | Layer | What It Does |
 |-------|-------------|
-| **Write-Ahead Journal** | Every operation logged before execution — survives crashes |
+| **Write-Ahead Journal** | Every operation logged before execution. Survives crashes. |
 | **Verify-After-Write** | SHA256 hash comparison catches silent corruption |
 | **APFS Clone Copies** | Backups use instant copy-on-write clones when possible |
 | **Backup Before Overwrite** | Original files preserved before any modification |
@@ -272,11 +272,11 @@ I/O Pool   File copy/move → APFS clonefile() instant clone → cross-volume fa
 Concurrency tuned per drive:  USB 2.0 → 2  |  USB 3.x → 4  |  Thunderbolt → 6  |  NVMe → 8
 ```
 
-- **Memory-mapped hashing** — large files (>4MB) use `mmap` with page-aligned 64MB sliding windows, eliminating kernel buffer copies and syscall overhead
-- **APFS clonefile optimization** — same-volume copies (duplicate moves, version backups, rollback restores) are instant copy-on-write clones with zero disk overhead; cross-volume operations fall back transparently
+- **Memory-mapped hashing.** Large files (>4MB) use `mmap` with page-aligned 64MB sliding windows, eliminating kernel buffer copies and syscall overhead.
+- **APFS clonefile optimization.** Same-volume copies (duplicate moves, version backups, rollback restores) are instant copy-on-write clones with zero disk overhead. Cross-volume operations fall back transparently.
 - **Parallel hashing** across all CPU cores
 - **Adaptive I/O scheduling** with backpressure to prevent drive saturation
-- **Separate pools** for CPU work and disk I/O — neither blocks the other
+- **Separate pools** for CPU work and disk I/O. Neither blocks the other.
 
 ---
 
@@ -361,7 +361,7 @@ Copyright 2026 Amit Chorasiya. All rights reserved.
 Licensed under the **Business Source License 1.1**:
 
 - **Free** for personal, educational, and non-production use
-- **Commercial use** requires a separate license — [contact me](https://github.com/amitchorasiya)
+- **Commercial use** requires a separate license. [Contact me](https://github.com/amitchorasiya).
 - Converts to **Apache 2.0** on February 28, 2030
 
 See [LICENSE](LICENSE) for full text.
@@ -371,6 +371,6 @@ See [LICENSE](LICENSE) for full text.
 ---
 
 <p align="center">
-  <strong>DriveSyncAI</strong> — Sync smarter. Organize with AI. Sleep well.<br><br>
+  <strong>DriveSyncAI.</strong> Sync smarter. Organize with AI. Sleep well.<br><br>
   <a href="https://github.com/amitchorasiya/DriveSyncAI/releases">Download</a> · <a href="https://github.com/amitchorasiya/DriveSyncAI/issues">Report Bug</a> · <a href="https://github.com/amitchorasiya">Author</a>
 </p>
