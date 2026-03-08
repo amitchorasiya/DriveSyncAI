@@ -5,12 +5,15 @@ import Foundation
 
 actor TaxReviewService {
 
-    private let piiRedactor = PIIRedactionService(sensitivity: .standard)
+    private func piiRedactor() -> PIIRedactorRef {
+        let engine = PIIEngine(rawValue: UserDefaults.standard.string(forKey: "piiEngine") ?? "") ?? .regex
+        return makePIIRedactor(engine: engine, sensitivity: .standard)
+    }
 
     // MARK: - Pre-Review PII Check
 
     func detectPIIInDraft(_ text: String) async -> [PIIType] {
-        await piiRedactor.detectPII(in: text)
+        await piiRedactor().detectPII(in: text)
     }
 
     // MARK: - Public API
@@ -23,14 +26,15 @@ actor TaxReviewService {
     ) async throws -> TaxReviewResult {
         let startTime = Date()
         let service = await configManager.currentService()
+        let redactor = piiRedactor()
 
-        let (safeDraft, _) = await piiRedactor.redactText(
+        let (safeDraft, _) = await redactor.redactText(
             draftDocument.extractedText, fileName: draftDocument.fileName
         )
         var redactedDraft = draftDocument
         redactedDraft.extractedText = safeDraft
 
-        let (safeCorpusDocs, _) = await piiRedactor.redactCorpus(
+        let (safeCorpusDocs, _) = await redactor.redactCorpus(
             documents: corpus.successfulDocuments
         )
         var safeCorpus = corpus
@@ -38,7 +42,7 @@ actor TaxReviewService {
 
         var safePriorYear: DocumentContent?
         if let prior = priorYearDraft {
-            let (safePrior, _) = await piiRedactor.redactText(
+            let (safePrior, _) = await redactor.redactText(
                 prior.extractedText, fileName: prior.fileName
             )
             var redactedPrior = prior

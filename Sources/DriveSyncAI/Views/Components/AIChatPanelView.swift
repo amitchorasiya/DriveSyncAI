@@ -14,6 +14,7 @@ struct AIChatPanelView<PendingContent: View, ExtraContent: View>: View {
     let quickActions: [String]
     let onSend: () -> Void
     let onClose: () -> Void
+    var onClearChat: (() -> Void)? = nil
     var isDisclaimerAccepted: Bool = true
     @ViewBuilder var pendingContent: () -> PendingContent
     @ViewBuilder var extraContent: () -> ExtraContent
@@ -388,13 +389,27 @@ struct AIChatPanelView<PendingContent: View, ExtraContent: View>: View {
     }
 
     private func systemBubble(_ message: OrganizationChatMessage) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: message.text.contains("Re-analyzing") ? "arrow.triangle.2.circlepath" : "checkmark.circle.fill")
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(.green)
-            Text(message.text)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(Color.dsSecondaryText)
+        let isContextLimit = message.text.contains("Context limit reached")
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: message.text.contains("Re-analyzing") ? "arrow.triangle.2.circlepath" : "checkmark.circle.fill")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.green)
+                Text(message.text)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Color.dsSecondaryText)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            if isContextLimit, let onClear = onClearChat {
+                Button {
+                    onClear()
+                } label: {
+                    Label("Start new chat", systemImage: "bubble.left.and.bubble.right")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+            }
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
@@ -443,6 +458,7 @@ extension AIChatPanelView where PendingContent == EmptyView, ExtraContent == Emp
         isLoading: Bool,
         quickActions: [String] = [],
         isDisclaimerAccepted: Bool = true,
+        onClearChat: (() -> Void)? = nil,
         onSend: @escaping () -> Void,
         onClose: @escaping () -> Void
     ) {
@@ -453,6 +469,7 @@ extension AIChatPanelView where PendingContent == EmptyView, ExtraContent == Emp
         self.isLoading = isLoading
         self.quickActions = quickActions
         self.isDisclaimerAccepted = isDisclaimerAccepted
+        self.onClearChat = onClearChat
         self.onSend = onSend
         self.onClose = onClose
         self.pendingContent = { EmptyView() }

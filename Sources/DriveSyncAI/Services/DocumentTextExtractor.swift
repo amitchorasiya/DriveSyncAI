@@ -5,6 +5,7 @@ import Foundation
 import PDFKit
 import Vision
 import AppKit
+import CoreXLSX
 
 actor DocumentTextExtractor {
 
@@ -35,9 +36,11 @@ actor DocumentTextExtractor {
                 return try extractCSV(url: url, fileSize: fileSize, sourceFolder: sourceFolder)
             } else if ext == "docx" || ext == "doc" {
                 return try await extractDOCX(url: url, fileSize: fileSize, sourceFolder: sourceFolder)
-            } else if ext == "xlsx" || ext == "xls" {
+            } else if ext == "xlsx" {
+                return try extractXLSX(url: url, fileSize: fileSize, sourceFolder: sourceFolder)
+            } else if ext == "xls" {
                 return extractUnsupported(url: url, fileSize: fileSize, sourceFolder: sourceFolder,
-                                          note: "Excel files require CoreXLSX. Plain text fallback attempted.")
+                                          note: "Legacy .xls format is not supported. Save as .xlsx (Excel 2007+) to analyze.")
             } else if Self.supportedTextExtensions.contains(ext) {
                 return try extractPlainText(url: url, fileSize: fileSize, sourceFolder: sourceFolder)
             } else {
@@ -306,6 +309,62 @@ actor DocumentTextExtractor {
             fileType: url.pathExtension.lowercased(),
             extractedText: text,
             extractionMethod: .textutil,
+            sourceFolder: sourceFolder
+        )
+    }
+
+    // MARK: - XLSX via CoreXLSX
+
+    private func extractXLSX(url: URL, fileSize: Int64, sourceFolder: URL) throws -> DocumentContent {
+        guard let file = XLSXFile(filepath: url.path) else {
+            throw ExtractionError.cannotOpenFile("Unable to open XLSX file (corrupt or not a valid .xlsx)")
+        }
+
+        let sharedStrings = try? file.parseSharedStrings()
+        let worksheetPaths = try file.parseWorksheetPaths()
+        var sections: [String] = []
+        var totalChars = 0
+        let maxChars = 500_000
+
+        for (sheetIndex, path) in worksheetPaths.enumerated() {
+            guard totalChars < maxChars else { break }
+            let worksheet = try file.parseWorksheet(at: path)
+            var rowsText: [String] = []
+            guard let rows = worksheet.data?.rows else { continue }
+
+            for row in rows {
+                var cellValues: [String] = []
+                for cell in row.cells {
+                    let value: String? = {
+                        if let ss = sharedStrings, let s = cell.stringValue(ss) { return s }
+                        if let v = cell.value { return v }
+                        return cell.inlineString?.text
+                    }()
+                    cellValues.append(value ?? "")
+                }
+                let rowLine = cellValues.joined(separator: "\t")
+                rowsText.append(rowLine)
+                totalChars += rowLine.count + 1
+                if totalChars >= maxChars { break }
+            }
+
+            let sheetTitle = "Sheet \(sheetIndex + 1)"
+            let block = "--- \(sheetTitle) ---\n" + rowsText.joined(separator: "\n")
+            sections.append(block)
+        }
+
+        var text = sections.joined(separator: "\n\n")
+        if totalChars >= maxChars {
+            text += "\n\n[Content truncated for very large workbook.]"
+        }
+
+        return DocumentContent(
+            fileName: url.lastPathComponent,
+            filePath: url.path,
+            fileSize: fileSize,
+            fileType: "xlsx",
+            extractedText: text,
+            extractionMethod: .coreXLSX,
             sourceFolder: sourceFolder
         )
     }

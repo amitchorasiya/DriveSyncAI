@@ -118,12 +118,18 @@ actor ModelAdvisorService {
 
         var isInstalled = false
         var pullCommand: String?
+        var ollamaNotInstalled = false
 
         if recommendedProvider == "ollama" {
-            let installed = await getInstalledOllamaModels()
-            isInstalled = installed.contains(where: { $0.lowercased().hasPrefix(recommendedModel.lowercased()) })
-            if !isInstalled {
-                pullCommand = "ollama pull \(recommendedModel)"
+            let ollamaAvailable = Self.ollamaBinaryAvailable()
+            if !ollamaAvailable {
+                ollamaNotInstalled = true
+            } else {
+                let installed = await getInstalledOllamaModels()
+                isInstalled = installed.contains(where: { $0.lowercased().hasPrefix(recommendedModel.lowercased()) })
+                if !isInstalled {
+                    pullCommand = "ollama pull \(recommendedModel)"
+                }
             }
         } else {
             isInstalled = true
@@ -139,6 +145,7 @@ actor ModelAdvisorService {
             reason: reason,
             isInstalled: isInstalled,
             pullCommand: pullCommand,
+            ollamaNotInstalled: ollamaNotInstalled,
             confidenceScore: 0.8,
             alternatives: alternatives
         )
@@ -209,17 +216,18 @@ actor ModelAdvisorService {
 
     // MARK: - Ollama Integration
 
+    private static func ollamaBinaryAvailable() -> Bool {
+        FileManager.default.fileExists(atPath: "/usr/local/bin/ollama")
+            || FileManager.default.fileExists(atPath: "/opt/homebrew/bin/ollama")
+    }
+
     private func getInstalledOllamaModels() async -> [String] {
+        guard Self.ollamaBinaryAvailable() else { return [] }
+
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/local/bin/ollama")
-
         if !FileManager.default.fileExists(atPath: "/usr/local/bin/ollama") {
-            let altPath = "/opt/homebrew/bin/ollama"
-            if FileManager.default.fileExists(atPath: altPath) {
-                process.executableURL = URL(fileURLWithPath: altPath)
-            } else {
-                return []
-            }
+            process.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/ollama")
         }
 
         process.arguments = ["list"]

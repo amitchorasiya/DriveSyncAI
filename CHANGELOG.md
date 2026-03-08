@@ -2,6 +2,33 @@
 
 All notable changes to DriveSyncAI will be documented in this file.
 
+## [1.4.0] - 2026-03-09
+
+### Added
+
+- **Ask My Docs — Excel (XLSX) support**: Full text extraction from `.xlsx` workbooks via CoreXLSX. All sheets are exported as tab-separated text for Q&A. Legacy `.xls` remains unsupported (save as .xlsx to analyze).
+
+- **Ask My Docs — Pull & Switch**: Model recommendation banner now runs `ollama pull` for the recommended model and switches the app to it when the user taps "Pull & Switch". Pull runs in the background so the UI stays responsive. If Ollama is not installed, the banner shows "Install Ollama" and opens ollama.com instead.
+
+- **Ask My Docs — Context limit handling**: When the request exceeds the model's context window (e.g. 4096 tokens), the app retries once with no conversation history. If that fails or the error persists, a clear message suggests starting a new chat, switching to a larger-context model, or asking a more focused question. "Start new chat" button appears in the context-limit message for one-tap clear. Conversation history is capped at 5 turns to reduce the chance of hitting the limit.
+
+- **Sync — Case preservation**: Target paths now preserve the same casing as the source. On case-insensitive volumes, the compare engine uses the source (or target) path from disk for create/update/delete actions instead of a lowercased key, so "MyFolder/File.PDF" stays "MyFolder/File.PDF" on the target.
+
+### Changed
+
+- **Ask My Docs — 0-readable UX**: When a scan completes but no documents could be extracted, the source row shows an orange warning icon and "0 readable" instead of a green check. Scan-result message in chat explains unsupported/encrypted/empty and lists supported formats. Model recommendation is only shown when at least one document was loaded.
+
+- **Ask My Docs — Ollama not installed**: When the recommended model is an Ollama model and Ollama is not installed, the banner shows "Ollama is not installed. Install it to use this model locally." and an "Install Ollama" button that opens ollama.com, instead of "Pull & Switch" and the subsequent error.
+
+### Technical
+
+- `CompareEngine`: Uses `sourceInfo?.relativePath ?? targetInfo?.relativePath` for action paths so casing is preserved; bidirectional state lookup falls back to lowercased key for older state files.
+- `AskMyDocsChatService`: `isContextSizeExceeded`, retry with empty history, friendly message, `maxHistoryTurns` reduced to 5.
+- `AIChatPanelView`: Optional `onClearChat` callback; "Start new chat" button in system bubble when message contains "Context limit reached" and callback is set.
+- `ModelRecommendation`: New `ollamaNotInstalled`; `ModelAdvisorService.ollamaBinaryAvailable()`.
+
+---
+
 ## [1.3.0] - 2026-03-01
 
 ### Added

@@ -131,9 +131,86 @@ struct RedactionSummary: Sendable {
     }
 }
 
-// MARK: - PIIRedactionService
+// MARK: - PII Engine
 
-actor PIIRedactionService {
+/// PII detection engine: built-in regex or optional Presidio (smart NER-based).
+enum PIIEngine: String, CaseIterable, Codable, Sendable {
+    case regex
+    case presidio
+
+    var displayName: String {
+        switch self {
+        case .regex: return "Regex (built-in)"
+        case .presidio: return "Presidio (smart detect)"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .regex: return "Pattern-based detection. No setup, works offline."
+        case .presidio: return "Context-aware NER. Fewer false positives. Requires one-time setup."
+        }
+    }
+}
+
+// MARK: - PII Redactor Protocol
+
+protocol PIIRedactorProtocol: Sendable {
+    func redactText(_ text: String, fileName: String) async -> (redacted: String, items: [RedactedItem])
+    func redactCorpus(documents: [DocumentContent]) async -> (redactedDocuments: [DocumentContent], summary: RedactionSummary)
+    func detectPII(in text: String) async -> [PIIType]
+}
+
+/// Type-erased redactor so callers can use Regex or Presidio without storing actor types.
+enum PIIRedactorRef: Sendable {
+    case regex(PIIRedactionService)
+    case presidio(PresidioPIIRedactor)
+
+    func redactText(_ text: String, fileName: String) async -> (redacted: String, items: [RedactedItem]) {
+        switch self {
+        case .regex(let r): return await r.redactText(text, fileName: fileName)
+        case .presidio(let p): return await p.redactText(text, fileName: fileName)
+        }
+    }
+
+    func redactCorpus(documents: [DocumentContent]) async -> (redactedDocuments: [DocumentContent], summary: RedactionSummary) {
+        switch self {
+        case .regex(let r): return await r.redactCorpus(documents: documents)
+        case .presidio(let p): return await p.redactCorpus(documents: documents)
+        }
+    }
+
+    func detectPII(in text: String) async -> [PIIType] {
+        switch self {
+        case .regex(let r): return await r.detectPII(in: text)
+        case .presidio(let p): return await p.detectPII(in: text)
+        }
+    }
+}
+
+/// Build the active redactor from app settings; falls back to regex if Presidio is selected but not set up.
+func makePIIRedactor(
+    engine: PIIEngine,
+    sensitivity: PIISensitivityLevel
+) -> PIIRedactorRef {
+    switch engine {
+    case .regex:
+        return .regex(PIIRedactionService(sensitivity: sensitivity))
+    case .presidio:
+        if PresidioPaths.isPresidioAvailable {
+            return .presidio(PresidioPIIRedactor(
+                sensitivity: sensitivity,
+                pythonURL: PresidioPaths.venvPythonURL,
+                scriptURL: PresidioPaths.scriptURL
+            ))
+        }
+        return .regex(PIIRedactionService(sensitivity: sensitivity))
+    }
+}
+
+// MARK: - PIIRedactionService (Regex implementation)
+
+actor PIIRedactionService: PIIRedactorProtocol {
 
     private let sensitivity: PIISensitivityLevel
 
@@ -141,9 +218,9 @@ actor PIIRedactionService {
         self.sensitivity = sensitivity
     }
 
-    // MARK: - Public API
+    // MARK: - Public API (PIIRedactorProtocol)
 
-    func redactText(_ text: String, fileName: String) -> (redacted: String, items: [RedactedItem]) {
+    func redactText(_ text: String, fileName: String) async -> (redacted: String, items: [RedactedItem]) {
         var result = text
         var items: [RedactedItem] = []
 
@@ -182,7 +259,7 @@ actor PIIRedactionService {
 
     func redactCorpus(
         documents: [DocumentContent]
-    ) -> (redactedDocuments: [DocumentContent], summary: RedactionSummary) {
+    ) async -> (redactedDocuments: [DocumentContent], summary: RedactionSummary) {
         var redacted: [DocumentContent] = []
         var summary = RedactionSummary(sensitivityLevel: sensitivity)
 
@@ -192,7 +269,7 @@ actor PIIRedactionService {
                 continue
             }
 
-            let (redactedText, items) = redactText(doc.extractedText, fileName: doc.fileName)
+            let (redactedText, items) = await redactText(doc.extractedText, fileName: doc.fileName)
 
             if !items.isEmpty {
                 summary.affectedDocuments.insert(doc.fileName)
@@ -211,7 +288,7 @@ actor PIIRedactionService {
         return (redacted, summary)
     }
 
-    func detectPII(in text: String) -> [PIIType] {
+    func detectPII(in text: String) async -> [PIIType] {
         var found: [PIIType] = []
         for piiType in PIIType.allCases {
             let patterns = regexPatterns(for: piiType)

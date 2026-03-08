@@ -135,6 +135,7 @@ enum ScanStatus: String, Sendable {
     case pending
     case scanning
     case completed
+    case completedEmpty
     case failed
 }
 
@@ -258,11 +259,12 @@ struct ModelRecommendation: Sendable {
     var reason: String
     var isInstalled: Bool
     var pullCommand: String?
+    var ollamaNotInstalled: Bool
     var confidenceScore: Double
     var alternatives: [(model: String, reason: String)]
 
     var needsPull: Bool {
-        !isInstalled && pullCommand != nil
+        !isInstalled && pullCommand != nil && !ollamaNotInstalled
     }
 }
 

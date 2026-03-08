@@ -17,7 +17,7 @@ final class AskMyDocsChatService: ObservableObject {
     private var conversationHistory: [(role: String, text: String)] = []
     private let modelAdvisor = ModelAdvisorService()
     private let taxReviewService = TaxReviewService()
-    private let maxHistoryTurns = 10
+    private let maxHistoryTurns = 5
 
     // MARK: - Initialization
 
@@ -50,7 +50,17 @@ final class AskMyDocsChatService: ObservableObject {
         }
 
         guard !insightService.corpus.successfulDocuments.isEmpty else {
-            let msg = "No documents have been scanned yet. Please add source folders and click 'Scan' first."
+            let msg: String
+            if insightService.hasCompletedScan {
+                let totalFiles = insightService.corpus.documents.count
+                if totalFiles > 0 {
+                    msg = "The scan found \(totalFiles) file(s) but none could be read. They may be encrypted, corrupted, or in an unsupported format. Supported formats: PDF, images (JPG/PNG), DOCX, Excel (XLSX), CSV, and plain text."
+                } else {
+                    msg = "The scan completed but no files were found in the selected folders. Please check that the folders contain documents and try again."
+                }
+            } else {
+                msg = "No documents have been scanned yet. Please add source folders and click **Scan** first."
+            }
             messages.append(OrganizationChatMessage(role: "assistant", text: msg))
             return
         }
@@ -91,15 +101,69 @@ final class AskMyDocsChatService: ObservableObject {
             conversationHistory.append((role: "assistant", text: result.answer))
 
         } catch {
-            lastError = error.localizedDescription
-            messages.append(OrganizationChatMessage(
-                role: "system",
-                text: "Error: \(error.localizedDescription)",
-                isStatusMessage: true
-            ))
+            if isContextSizeExceeded(error) {
+                let reducedHistory = Array(conversationHistory.suffix(2))
+                if !reducedHistory.isEmpty {
+                    do {
+                        let result = try await insightService.query(
+                            question: trimmed,
+                            conversationHistory: [],
+                            configManager: configManager
+                        )
+                        lastInsightResult = result
+                        var responseText = result.answer
+                        if !result.dataPoints.isEmpty {
+                            responseText += "\n\n**Extracted Data:**\n"
+                            for dp in result.dataPoints {
+                                responseText += "• **\(dp.label)**: \(dp.value)"
+                                responseText += " _(from \(dp.sourceDocument))_\n"
+                            }
+                        }
+                        if let note = result.completenessNote {
+                            responseText += "\n\n> \(note)"
+                        }
+                        if !result.suggestedFollowUps.isEmpty {
+                            responseText += "\n\n**You might also ask:**\n"
+                            for q in result.suggestedFollowUps.prefix(3) {
+                                responseText += "• \(q)\n"
+                            }
+                        }
+                        messages.append(OrganizationChatMessage(role: "assistant", text: responseText))
+                        conversationHistory.append((role: "assistant", text: result.answer))
+                        messages.append(OrganizationChatMessage(
+                            role: "system",
+                            text: "The previous reply was sent using only this question (conversation history was trimmed to fit the model's context window).",
+                            isStatusMessage: true
+                        ))
+                        isLoading = false
+                        return
+                    } catch _ { }
+                }
+                lastError = "Context size exceeded"
+                messages.append(OrganizationChatMessage(
+                    role: "system",
+                    text: "**Context limit reached.** The conversation and documents don't fit in this model's context window. Try: 1) **Start a new chat** (clear history and ask again), 2) **Switch to a model with a larger context** in Settings (e.g. Gemma 3 12B), or 3) Ask a more focused question.",
+                    isStatusMessage: true
+                ))
+            } else {
+                lastError = error.localizedDescription
+                messages.append(OrganizationChatMessage(
+                    role: "system",
+                    text: "Error: \(error.localizedDescription)",
+                    isStatusMessage: true
+                ))
+            }
         }
 
         isLoading = false
+    }
+
+    private func isContextSizeExceeded(_ error: Error) -> Bool {
+        let msg = error.localizedDescription.lowercased()
+        return msg.contains("exceed_context_size")
+            || msg.contains("exceeds the available context size")
+            || msg.contains("context size")
+            || (msg.contains("n_ctx") && msg.contains("token"))
     }
 
     // MARK: - Tax Review
@@ -167,15 +231,42 @@ final class AskMyDocsChatService: ObservableObject {
         isLoading = false
     }
 
+    // MARK: - Scan Notifications
+
+    func notifyScanResult(successCount: Int, failedCount: Int) {
+        let msg: String
+        if successCount > 0 && failedCount == 0 {
+            let plural = successCount == 1 ? "document" : "documents"
+            msg = "Scan complete — **\(successCount) \(plural)** loaded and ready. You can now ask questions about your documents."
+        } else if successCount > 0 && failedCount > 0 {
+            let sPlural = successCount == 1 ? "document" : "documents"
+            let fPlural = failedCount == 1 ? "file" : "files"
+            msg = "Scan complete — **\(successCount) \(sPlural)** loaded. \(failedCount) \(fPlural) couldn't be read (unsupported format or encrypted). You can ask questions about the loaded documents."
+        } else if failedCount > 0 {
+            let fPlural = failedCount == 1 ? "file was" : "files were"
+            msg = "Scan finished but **no readable documents** were found. \(failedCount) \(fPlural) skipped (unsupported format, encrypted, or empty). Try adding folders with PDFs, images, text files, DOCX, or Excel files."
+        } else {
+            msg = "Scan finished but **no files** were found in the selected folders. Make sure the folders contain documents and try again."
+        }
+        messages.append(OrganizationChatMessage(
+            role: "system",
+            text: msg,
+            isStatusMessage: true
+        ))
+    }
+
     // MARK: - Model Recommendation
 
-    func checkModelRecommendation(corpus: DocumentCorpus, currentConfig: LLMProviderConfig) async {
+    func checkModelRecommendation(
+        corpus: DocumentCorpus,
+        currentConfig: LLMProviderConfig,
+        insightService: DocumentInsightService? = nil
+    ) async {
         let (domain, confidence) = await modelAdvisor.detectDomain(from: corpus)
 
-        await MainActor.run {
-            var updatedCorpus = corpus
-            updatedCorpus.detectedDomain = domain
-            updatedCorpus.domainConfidence = confidence
+        if let service = insightService {
+            service.corpus.detectedDomain = domain
+            service.corpus.domainConfidence = confidence
         }
 
         if let recommendation = await modelAdvisor.recommend(

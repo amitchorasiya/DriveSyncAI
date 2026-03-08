@@ -53,6 +53,7 @@ actor CompareEngine {
             let normRelPath = PathNormalizer.normalize(relPath)
             let sourceInfo = findInMap(sourceMap, key: normRelPath, caseSensitive: caseSensitive)
             let targetInfo = findInMap(targetMap, key: normRelPath, caseSensitive: caseSensitive)
+            let relativePathForAction = sourceInfo?.relativePath ?? targetInfo?.relativePath ?? relPath
 
             let action: SyncAction?
             switch direction {
@@ -60,14 +61,14 @@ actor CompareEngine {
                 action = actionForOneWayMirror(
                     source: sourceInfo,
                     target: targetInfo,
-                    relativePath: relPath,
+                    relativePath: relativePathForAction,
                     caseSensitive: caseSensitive
                 )
             case .oneWayUpdate:
                 action = actionForOneWayUpdate(
                     source: sourceInfo,
                     target: targetInfo,
-                    relativePath: relPath,
+                    relativePath: relativePathForAction,
                     caseSensitive: caseSensitive
                 )
             case .bidirectional:
@@ -76,7 +77,7 @@ actor CompareEngine {
                     target: target,
                     sourceInfo: sourceInfo,
                     targetInfo: targetInfo,
-                    relativePath: relPath,
+                    relativePath: relativePathForAction,
                     caseSensitive: caseSensitive
                 )
             }
@@ -171,7 +172,7 @@ actor CompareEngine {
 
         let srcMod = sourceInfo?.modificationDate
         let tgtMod = targetInfo?.modificationDate
-        let stateEntry = state?.files[relativePath]
+        let stateEntry = state?.files[relativePath] ?? (caseSensitive ? nil : state?.files[relativePath.lowercased()])
 
         if let src = sourceInfo, let tgt = targetInfo {
             let srcNewer = (srcMod ?? .distantPast) > (tgtMod ?? .distantPast)

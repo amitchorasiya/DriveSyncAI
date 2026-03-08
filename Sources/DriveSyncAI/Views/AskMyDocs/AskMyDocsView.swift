@@ -25,7 +25,12 @@ struct AskMyDocsView: View {
     @State private var showChatPanel = true
     @State private var chatInput = ""
     @State private var showExportOptions = false
+    @State private var showPresidioSetup = false
+    @State private var isPullingModel = false
+    @State private var pullModelError: String?
     @AppStorage("hasAcceptedAIDisclaimer") private var hasAcceptedAIDisclaimer = false
+    @AppStorage("piiEngine") private var piiEngineRaw = PIIEngine.regex.rawValue
+    @StateObject private var presidioSetup = PresidioSetupService()
 
     var body: some View {
         HStack(spacing: 0) {
@@ -172,42 +177,81 @@ struct AskMyDocsView: View {
     }
 
     private var piiProtectionSection: some View {
-        HStack(spacing: 12) {
-            Image(systemName: insightService.piiProtectionEnabled ? "shield.checkered" : "shield.slash")
-                .font(.title3)
-                .foregroundStyle(insightService.piiProtectionEnabled ? .green : .red)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                Image(systemName: insightService.piiProtectionEnabled ? "shield.checkered" : "shield.slash")
+                    .font(.title3)
+                    .foregroundStyle(insightService.piiProtectionEnabled ? .green : .red)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text("PII Protection")
-                    .font(.subheadline.bold())
-                Text(insightService.piiProtectionEnabled
-                     ? "SSNs, account numbers, and other sensitive data are automatically redacted before reaching the AI model."
-                     : "PII protection is OFF. Sensitive data may be sent to the AI provider.")
-                    .font(.caption)
-                    .foregroundStyle(Color.dsSecondaryText)
-            }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("PII Protection")
+                        .font(.subheadline.bold())
+                    Text(insightService.piiProtectionEnabled
+                         ? "SSNs, account numbers, and other sensitive data are automatically redacted before reaching the AI model."
+                         : "PII protection is OFF. Sensitive data may be sent to the AI provider.")
+                        .font(.caption)
+                        .foregroundStyle(Color.dsSecondaryText)
+                }
 
-            Spacer()
+                Spacer()
 
-            if insightService.piiProtectionEnabled {
-                Picker("", selection: $insightService.piiSensitivityLevel) {
-                    ForEach(PIISensitivityLevel.allCases, id: \.rawValue) { level in
-                        Text(level.displayName).tag(level)
+                if insightService.piiProtectionEnabled {
+                    Picker("", selection: $insightService.piiSensitivityLevel) {
+                        ForEach(PIISensitivityLevel.allCases, id: \.rawValue) { level in
+                            Text(level.displayName).tag(level)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 160)
+                    .onChange(of: insightService.piiSensitivityLevel) { _ in
+                        Task { await insightService.applyPIIRedaction() }
                     }
                 }
-                .pickerStyle(.segmented)
-                .frame(width: 160)
-                .onChange(of: insightService.piiSensitivityLevel) { _ in
-                    Task { await insightService.applyPIIRedaction() }
+
+                Toggle("", isOn: $insightService.piiProtectionEnabled)
+                    .toggleStyle(.switch)
+                    .labelsHidden()
+                    .onChange(of: insightService.piiProtectionEnabled) { _ in
+                        Task { await insightService.applyPIIRedaction() }
+                    }
+            }
+
+            if insightService.piiProtectionEnabled {
+                HStack(spacing: 12) {
+                    Text("Detection engine")
+                        .font(.caption)
+                        .foregroundStyle(Color.dsSecondaryText)
+                    Picker("", selection: $piiEngineRaw) {
+                        ForEach(PIIEngine.allCases, id: \.rawValue) { engine in
+                            Text(engine.displayName).tag(engine.rawValue)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 260)
+                    .onChange(of: piiEngineRaw) { _ in
+                        Task { await insightService.applyPIIRedaction() }
+                    }
+                    if (PIIEngine(rawValue: piiEngineRaw) ?? .regex) == .presidio {
+                        Text(PresidioSetupService.isPresidioAvailable ? "Presidio: Ready" : "Presidio: Not set up")
+                            .font(.caption)
+                            .foregroundStyle(PresidioSetupService.isPresidioAvailable ? .green : .orange)
+                        Button("Setup Presidio") {
+                            showPresidioSetup = true
+                        }
+                        .buttonStyle(.bordered)
+                    }
                 }
             }
 
-            Toggle("", isOn: $insightService.piiProtectionEnabled)
-                .toggleStyle(.switch)
-                .labelsHidden()
-                .onChange(of: insightService.piiProtectionEnabled) { _ in
-                    Task { await insightService.applyPIIRedaction() }
+            if insightService.presidioFallbackUsed {
+                HStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                    Text("Presidio was selected but is not set up; using Regex (built-in) for this run.")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
                 }
+            }
         }
         .padding(12)
         .background(
@@ -225,6 +269,36 @@ struct AskMyDocsView: View {
                 )
         )
         .cornerRadius(8)
+        .sheet(isPresented: $showPresidioSetup) {
+            presidioSetupSheet
+        }
+    }
+
+    private var presidioSetupSheet: some View {
+        VStack(spacing: 16) {
+            Text("Setup Presidio (smart PII detect)")
+                .font(.headline)
+            Text(presidioSetup.statusLine)
+                .font(.subheadline)
+                .foregroundStyle(Color.dsSecondaryText)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+            if case .failed(let msg) = presidioSetup.phase {
+                Text(msg)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .multilineTextAlignment(.center)
+            }
+            Button("Close") {
+                showPresidioSetup = false
+            }
+            .keyboardShortcut(.cancelAction)
+        }
+        .padding(24)
+        .frame(minWidth: 320)
+        .onAppear {
+            Task { await presidioSetup.runSetup() }
+        }
     }
 
     private var redactionSummaryBanner: some View {
@@ -271,8 +345,20 @@ struct AskMyDocsView: View {
                 }
 
                 Button {
-                    Task { await insightService.scanAllSources() }
                     Task {
+                        await insightService.scanAllSources()
+
+                        let successCount = insightService.corpus.successfulDocuments.count
+                        let totalScanned = insightService.corpus.documents.count
+                        let failedCount = totalScanned - successCount
+
+                        chatService.notifyScanResult(
+                            successCount: successCount,
+                            failedCount: failedCount
+                        )
+
+                        guard successCount > 0 else { return }
+
                         let config = LLMProviderConfig(
                             provider: configManager.activeProvider,
                             model: configManager.activeModel,
@@ -280,7 +366,8 @@ struct AskMyDocsView: View {
                         )
                         await chatService.checkModelRecommendation(
                             corpus: insightService.corpus,
-                            currentConfig: config
+                            currentConfig: config,
+                            insightService: insightService
                         )
                     }
                 } label: {
@@ -336,6 +423,10 @@ struct AskMyDocsView: View {
                 Text("\(source.documentCount) docs")
                     .font(.caption)
                     .foregroundStyle(Color.dsSecondaryText)
+            } else if source.scanStatus == .completedEmpty {
+                Text("0 readable")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
             }
 
             Button {
@@ -378,48 +469,128 @@ struct AskMyDocsView: View {
     // MARK: - Model Recommendation
 
     private func modelRecommendationBanner(_ rec: ModelRecommendation) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: "lightbulb.fill")
-                .foregroundStyle(.yellow)
-                .font(.title3)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 12) {
+                Image(systemName: "lightbulb.fill")
+                    .foregroundStyle(.yellow)
+                    .font(.title3)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Model Recommendation")
-                    .font(.subheadline.bold())
-                Text(rec.reason)
-                    .font(.caption)
-                    .foregroundStyle(Color.dsSecondaryText)
-            }
-
-            Spacer()
-
-            if rec.isInstalled {
-                Button("Switch") {
-                    // Model switching handled by config manager
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Model Recommendation")
+                        .font(.subheadline.bold())
+                    Text(rec.reason)
+                        .font(.caption)
+                        .foregroundStyle(Color.dsSecondaryText)
+                    if rec.ollamaNotInstalled {
+                        Text("Ollama is not installed. Install it to use this model locally.")
+                            .font(.caption2)
+                            .foregroundStyle(Color.dsSecondaryText)
+                    }
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-            } else if let cmd = rec.pullCommand {
-                Button("Pull & Switch") {
-                    // Pull model via ollama
-                    _ = cmd
+
+                Spacer()
+
+                if rec.isInstalled {
+                    Button("Switch") {
+                        applyModelRecommendation(rec)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                } else if rec.ollamaNotInstalled {
+                    Button("Install Ollama") {
+                        pullModelError = nil
+                        NSWorkspace.shared.open(URL(string: "https://ollama.com")!)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                    .help("Opens ollama.com to download and install Ollama. After installing, return here and run Scan again to pull the recommended model.")
+                } else if let cmd = rec.pullCommand, !isPullingModel {
+                    Button("Pull & Switch") {
+                        Task { await pullAndSwitch(to: rec, pullCommand: cmd) }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                    .disabled(isPullingModel)
+                } else if isPullingModel {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    Text("Pulling…")
+                        .font(.caption)
+                        .foregroundStyle(Color.dsSecondaryText)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
+
+                Button {
+                    pullModelError = nil
+                    chatService.dismissModelRecommendation()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.caption)
+                }
+                .buttonStyle(.borderless)
             }
 
-            Button {
-                chatService.dismissModelRecommendation()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.caption)
+            if let err = pullModelError {
+                Text(err)
+                    .font(.caption2)
+                    .foregroundStyle(.red)
             }
-            .buttonStyle(.borderless)
         }
         .padding(12)
         .background(Color.yellow.opacity(0.08))
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.yellow.opacity(0.3), lineWidth: 1))
         .cornerRadius(8)
+    }
+
+    private func applyModelRecommendation(_ rec: ModelRecommendation) {
+        let provider = LLMProviderType(rawValue: rec.recommendedProvider) ?? .ollama
+        configManager.activeProvider = provider
+        configManager.activeModel = rec.recommendedModel
+        chatService.dismissModelRecommendation()
+    }
+
+    private func runOllamaPull(model: String) async -> Bool {
+        let (success, errorMessage) = await Task.detached(priority: .userInitiated) { () -> (Bool, String?) in
+            let ollamaPath: String
+            if FileManager.default.fileExists(atPath: "/usr/local/bin/ollama") {
+                ollamaPath = "/usr/local/bin/ollama"
+            } else if FileManager.default.fileExists(atPath: "/opt/homebrew/bin/ollama") {
+                ollamaPath = "/opt/homebrew/bin/ollama"
+            } else {
+                return (false, "Ollama not found. Install from ollama.com.")
+            }
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: ollamaPath)
+            process.arguments = ["pull", model]
+            let pipe = Pipe()
+            process.standardOutput = pipe
+            process.standardError = pipe
+            do {
+                try process.run()
+                process.waitUntilExit()
+                if process.terminationStatus != 0 {
+                    let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                    let err = String(data: data, encoding: .utf8) ?? "Unknown error"
+                    return (false, String(err.trimmingCharacters(in: .whitespacesAndNewlines).prefix(200)))
+                }
+                return (true, nil)
+            } catch {
+                return (false, error.localizedDescription)
+            }
+        }.value
+        pullModelError = errorMessage
+        return success
+    }
+
+    private func pullAndSwitch(to rec: ModelRecommendation, pullCommand: String) async {
+        pullModelError = nil
+        isPullingModel = true
+        defer { isPullingModel = false }
+        let model = rec.recommendedModel
+        let ok = await runOllamaPull(model: model)
+        guard ok else { return }
+        await MainActor.run {
+            applyModelRecommendation(rec)
+        }
     }
 
     private func modelRecommendationBadge(_ rec: ModelRecommendation) -> some View {
@@ -575,6 +746,7 @@ struct AskMyDocsView: View {
             input: $chatInput,
             isLoading: chatService.isLoading,
             quickActions: quickActions,
+            onClearChat: { chatService.clearChat() },
             onSend: {
                 let text = chatInput
                 chatInput = ""
@@ -661,6 +833,7 @@ struct AskMyDocsView: View {
         case .pending: return "circle.dashed"
         case .scanning: return "arrow.triangle.2.circlepath"
         case .completed: return "checkmark.circle.fill"
+        case .completedEmpty: return "exclamationmark.triangle.fill"
         case .failed: return "xmark.circle.fill"
         }
     }
@@ -670,6 +843,7 @@ struct AskMyDocsView: View {
         case .pending: return .secondary
         case .scanning: return .accentColor
         case .completed: return .green
+        case .completedEmpty: return .orange
         case .failed: return .red
         }
     }

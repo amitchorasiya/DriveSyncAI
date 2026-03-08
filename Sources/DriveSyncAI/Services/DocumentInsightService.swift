@@ -10,11 +10,14 @@ final class DocumentInsightService: ObservableObject {
     @Published var corpus = DocumentCorpus()
     @Published var sources: [DocumentSource] = []
     @Published var isScanning = false
+    @Published var hasCompletedScan = false
     @Published var scanProgress: (current: String, processed: Int, total: Int)?
     @Published var lastError: String?
     @Published var piiProtectionEnabled = true
     @Published var piiSensitivityLevel: PIISensitivityLevel = .standard
     @Published var redactionSummary = RedactionSummary()
+    /// When true, user selected Presidio but it was unavailable so regex was used.
+    @Published var presidioFallbackUsed = false
 
     private let extractor = DocumentTextExtractor()
     private let maxSinglePromptChars = 50_000
@@ -56,7 +59,7 @@ final class DocumentInsightService: ObservableObject {
                 let successful = docs.filter(\.isSuccessful)
                 sources[i].documentCount = successful.count
                 sources[i].totalChars = successful.reduce(0) { $0 + $1.charCount }
-                sources[i].scanStatus = .completed
+                sources[i].scanStatus = successful.isEmpty ? .completedEmpty : .completed
 
                 totalSupported += docs.filter(\.isSuccessful).count
                 totalUnsupported += docs.filter { !$0.isSuccessful }.count
@@ -77,17 +80,21 @@ final class DocumentInsightService: ObservableObject {
 
         await applyPIIRedaction()
 
+        hasCompletedScan = true
         isScanning = false
         scanProgress = nil
     }
 
     func applyPIIRedaction() async {
         if piiProtectionEnabled {
-            let redactor = PIIRedactionService(sensitivity: piiSensitivityLevel)
+            let engine = PIIEngine(rawValue: UserDefaults.standard.string(forKey: "piiEngine") ?? "") ?? .regex
+            presidioFallbackUsed = (engine == .presidio && !PresidioSetupService.isPresidioAvailable)
+            let redactor = makePIIRedactor(engine: engine, sensitivity: piiSensitivityLevel)
             let (redacted, summary) = await redactor.redactCorpus(documents: corpus.documents)
             redactedDocumentsCache = redacted
             redactionSummary = summary
         } else {
+            presidioFallbackUsed = false
             redactedDocumentsCache = corpus.documents
             redactionSummary = RedactionSummary()
         }
