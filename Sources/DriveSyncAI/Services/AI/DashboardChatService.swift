@@ -2,9 +2,12 @@
 // Licensed under the Business Source License 1.1. See LICENSE file.
 
 import Foundation
+import os.log
 
 @MainActor
 final class DashboardChatService: ObservableObject {
+    private static let log = Logger(subsystem: "com.amitchorasiya.drivesyncai", category: "DashboardChat")
+
     @Published var messages: [OrganizationChatMessage] = []
     @Published var isLoading = false
     @Published var lastError: String?
@@ -15,11 +18,21 @@ final class DashboardChatService: ObservableObject {
     func addWelcomeMessage(driveCount: Int) {
         guard !hasShownWelcome else { return }
         hasShownWelcome = true
-        let msg = "Welcome to DriveSyncAI! You have \(driveCount) drive\(driveCount == 1 ? "" : "s") connected. Ask me anything:\n" +
+        let msg = welcomeText(driveCount: driveCount)
+        messages.append(OrganizationChatMessage(role: "assistant", text: msg, isStatusMessage: true))
+    }
+
+    /// Updates the welcome message when drive count changes (e.g. after VolumeMonitor finishes loading).
+    func updateWelcomeDriveCount(_ driveCount: Int) {
+        guard let idx = messages.firstIndex(where: { $0.role == "assistant" && $0.text.hasPrefix("Welcome to DriveSyncAI!") }) else { return }
+        messages[idx] = OrganizationChatMessage(role: "assistant", text: welcomeText(driveCount: driveCount), isStatusMessage: true)
+    }
+
+    private func welcomeText(driveCount: Int) -> String {
+        "Welcome to DriveSyncAI! You have \(driveCount) drive\(driveCount == 1 ? "" : "s") connected. Ask me anything:\n" +
             "• \"How much free space on my drives?\"\n" +
             "• \"Which drive has the most space?\"\n" +
             "• \"What should I do first?\""
-        messages.append(OrganizationChatMessage(role: "assistant", text: msg, isStatusMessage: true))
     }
 
     @discardableResult
@@ -42,6 +55,7 @@ final class DashboardChatService: ObservableObject {
         let userPrompt = buildUserPrompt(text: trimmed, drives: drives, activities: recentActivities)
 
         do {
+            Self.log.info("Sending prompt to LLM")
             let response = try await service.sendPrompt(system: systemPrompt, user: userPrompt)
             let cleaned = response.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -51,7 +65,8 @@ final class DashboardChatService: ObservableObject {
             return cleaned
         } catch {
             lastError = error.localizedDescription
-            let errMsg = "Sorry, I couldn't process that. Please try again."
+            Self.log.error("Dashboard LLM request failed: \(String(describing: error.localizedDescription))")
+            let errMsg = "Sorry, I couldn't process that. Please try again.\n\nError: \(error.localizedDescription)"
             messages.append(OrganizationChatMessage(role: "assistant", text: errMsg))
             conversationHistory.append((role: "assistant", content: errMsg))
             isLoading = false

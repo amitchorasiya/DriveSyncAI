@@ -2,6 +2,7 @@
 // Licensed under the Business Source License 1.1. See LICENSE file.
 
 import Foundation
+import os.log
 
 // MARK: - Protocol
 
@@ -436,6 +437,8 @@ final class PerplexityLLMService: LLMServiceProtocol, @unchecked Sendable {
 /// Connects to the bundled llama-server running on localhost:8181.
 /// Uses the OpenAI-compatible /v1/chat/completions endpoint.
 final class LlamaCppLLMService: LLMServiceProtocol, @unchecked Sendable {
+    private static let log = Logger(subsystem: "com.amitchorasiya.drivesyncai", category: "LlamaCppLLM")
+
     private let baseURL: String
     private let model: String
     private let session: URLSession
@@ -465,12 +468,21 @@ final class LlamaCppLLMService: LLMServiceProtocol, @unchecked Sendable {
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await session.data(for: request)
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch {
+            Self.log.error("Built-in engine request failed: \(String(describing: error.localizedDescription))")
+            throw LLMError.connectionFailed(error.localizedDescription)
+        }
+
         guard let http = response as? HTTPURLResponse else {
+            Self.log.error("Built-in engine returned non-HTTP response")
             throw LLMError.connectionFailed("No HTTP response from local AI engine")
         }
         guard http.statusCode == 200 else {
             let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
+            Self.log.error("Built-in engine HTTP \(http.statusCode): \(String(describing: msg.prefix(200)))")
             throw LLMError.apiError(http.statusCode, msg)
         }
 
@@ -479,6 +491,8 @@ final class LlamaCppLLMService: LLMServiceProtocol, @unchecked Sendable {
               let first = choices.first,
               let message = first["message"] as? [String: Any],
               let content = message["content"] as? String else {
+            let raw = String(data: data, encoding: .utf8) ?? ""
+            Self.log.error("Built-in engine invalid response shape: \(String(describing: raw.prefix(300)))")
             throw LLMError.invalidResponse("Missing choices[0].message.content from local engine")
         }
         return content

@@ -59,6 +59,9 @@ struct DashboardView: View {
             .onAppear {
                 chatService.addWelcomeMessage(driveCount: volumeMonitor.mountedVolumes.count)
             }
+            .onChange(of: volumeMonitor.mountedVolumes.count) { _, newCount in
+                chatService.updateWelcomeDriveCount(newCount)
+            }
 
             if showChatPanel {
                 AIChatPanelView(

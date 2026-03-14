@@ -2,6 +2,25 @@
 
 All notable changes to DriveSyncAI will be documented in this file.
 
+## [1.5.0] - 2026-03-14
+
+### Added
+
+- **Dashboard Buddy — Error visibility**: When the LLM request fails, the buddy now shows the actual error below "Sorry, I couldn't process that" (e.g. connection failed, API error 404) so you can see why it failed.
+- **Logging**: Unified logging (os.log) for Dashboard chat and built-in LLM (LlamaCpp). Subsystem `com.amitchorasiya.drivesyncai`, categories `DashboardChat` and `LlamaCppLLM`. View in Console.app to debug failures.
+- **Clean-install script**: `scripts/clean_install.sh` removes all app settings, `~/.drivesyncai`, preferences, and keychain entries so the next launch is like a fresh install.
+
+### Changed
+
+- **Dashboard welcome — Drive count**: Welcome message no longer shows "0 drives" when volumes are still loading. It updates when `VolumeMonitor` finishes (e.g. "You have 2 drives connected").
+- **Build scripts**: `build_app.sh` and `build_dmg.sh` use version 1.5.0.
+
+### Fixed
+
+- Dashboard Buddy generic "Sorry, I couldn't process that" now includes the underlying error message and is logged for troubleshooting.
+
+---
+
 ## [1.4.0] - 2026-03-09
 
 ### Added
