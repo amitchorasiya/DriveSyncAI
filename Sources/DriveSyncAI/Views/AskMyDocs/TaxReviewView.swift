@@ -420,6 +420,12 @@ struct TaxReviewView: View {
                 Text(finding.description)
                     .font(.caption)
 
+                if let rec = finding.recommendation, !rec.isEmpty {
+                    Text(rec)
+                        .font(.caption2)
+                        .foregroundStyle(Color.dsSecondaryText)
+                }
+
                 HStack(spacing: 12) {
                     if let line = finding.draftLineReference {
                         Text(line)

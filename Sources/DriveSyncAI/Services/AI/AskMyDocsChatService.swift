@@ -221,9 +221,13 @@ final class AskMyDocsChatService: ObservableObject {
 
         } catch {
             lastError = error.localizedDescription
+            var failureText = "Tax review failed: \(error.localizedDescription)"
+            if isContextSizeExceeded(error) {
+                failureText += "\n\n**Tip:** Your document is large. Use a model with a larger context (e.g. **mistral-nemo** 128K) in Settings → AI Provider for full-document review. The review will still use the first portion of your draft with the current model."
+            }
             messages.append(OrganizationChatMessage(
                 role: "system",
-                text: "Tax review failed: \(error.localizedDescription)",
+                text: failureText,
                 isStatusMessage: true
             ))
         }

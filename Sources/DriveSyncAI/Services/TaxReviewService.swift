@@ -89,13 +89,21 @@ actor TaxReviewService {
 
     // MARK: - Layer 1: Accuracy Check
 
+    /// Conservative character limits so total prompt stays under typical 4K token context (~16k chars).
+    private static let draftCharLimitAccuracy = 4000
+    private static let draftCharLimitSavings = 4000
+    private static let draftCharLimitAudit = 6000
+    private static let draftCharLimitYoy = 2500
+    private static let sourceDocCountLimit = 8
+    private static let sourceDocCharLimit = 1200
+
     private func runAccuracyCheck(
         draft: DocumentContent,
         corpus: DocumentCorpus,
         service: LLMServiceProtocol
     ) async throws -> [ReviewFinding] {
-        let sourceDocSummaries = corpus.successfulDocuments.prefix(30).map { doc in
-            "[\(doc.fileName)] (\(doc.extractionMethod.displayName)):\n\(String(doc.extractedText.prefix(3000)))"
+        let sourceDocSummaries = corpus.successfulDocuments.prefix(Self.sourceDocCountLimit).map { doc in
+            "[\(doc.fileName)] (\(doc.extractionMethod.displayName)):\n\(String(doc.extractedText.prefix(Self.sourceDocCharLimit)))"
         }.joined(separator: "\n\n---\n\n")
 
         let systemPrompt = """
@@ -133,7 +141,7 @@ actor TaxReviewService {
 
         let userPrompt = """
         Draft tax return (\(draft.fileName)):
-        \(String(draft.extractedText.prefix(8000)))
+        \(String(draft.extractedText.prefix(Self.draftCharLimitAccuracy)))
 
         Source documents:
         \(sourceDocSummaries)
@@ -154,8 +162,8 @@ actor TaxReviewService {
         service: LLMServiceProtocol
     ) async throws -> [ReviewFinding] {
         let sourceDocNames = corpus.successfulDocuments.map(\.fileName).joined(separator: ", ")
-        let sourceDocContent = corpus.successfulDocuments.prefix(20).map { doc in
-            "[\(doc.fileName)]:\n\(String(doc.extractedText.prefix(2000)))"
+        let sourceDocContent = corpus.successfulDocuments.prefix(Self.sourceDocCountLimit).map { doc in
+            "[\(doc.fileName)]:\n\(String(doc.extractedText.prefix(Self.sourceDocCharLimit)))"
         }.joined(separator: "\n\n---\n\n")
 
         let systemPrompt = """
@@ -200,7 +208,7 @@ actor TaxReviewService {
 
         let userPrompt = """
         Draft tax return (\(draft.fileName)):
-        \(String(draft.extractedText.prefix(6000)))
+        \(String(draft.extractedText.prefix(Self.draftCharLimitSavings)))
 
         Available source documents: \(sourceDocNames)
 
@@ -258,7 +266,7 @@ actor TaxReviewService {
 
         let userPrompt = """
         Draft tax return (\(draft.fileName)):
-        \(String(draft.extractedText.prefix(8000)))
+        \(String(draft.extractedText.prefix(Self.draftCharLimitAudit)))
 
         Review this draft for items that may benefit from additional documentation or attention.
         """
@@ -308,10 +316,10 @@ actor TaxReviewService {
 
         let userPrompt = """
         Current year draft (\(currentDraft.fileName)):
-        \(String(currentDraft.extractedText.prefix(5000)))
+        \(String(currentDraft.extractedText.prefix(Self.draftCharLimitYoy)))
 
         Prior year return (\(priorDraft.fileName)):
-        \(String(priorDraft.extractedText.prefix(5000)))
+        \(String(priorDraft.extractedText.prefix(Self.draftCharLimitYoy)))
 
         Compare these two tax returns and identify significant year-over-year changes.
         """

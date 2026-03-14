@@ -18,6 +18,8 @@ All notable changes to DriveSyncAI will be documented in this file.
 ### Fixed
 
 - Dashboard Buddy generic "Sorry, I couldn't process that" now includes the underlying error message and is logged for troubleshooting.
+- **Tax Review — Context size**: Prompts are capped so they stay under 4K token context (smaller draft/source limits per call). Built-in engine context increased to 8192. When context is exceeded, the app suggests switching to a larger-context model (e.g. mistral-nemo).
+- **Tax Review — PDF report cutting off**: Export table styling updated so Recommendation and other columns wrap text instead of truncating (word-wrap, table-layout: fixed, last column width). In-app findings now show recommendation text per item.
 
 ---
 

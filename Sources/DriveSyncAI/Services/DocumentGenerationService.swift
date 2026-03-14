@@ -331,10 +331,12 @@ actor DocumentGenerationService {
         .answer { margin: 12px 0; }
         .disclaimer { background: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 6px; font-size: 11px; margin: 16px 0; }
         .note { background: #e3f2fd; border: 1px solid #90caf9; padding: 10px; border-radius: 6px; margin: 12px 0; }
-        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12px; }
-        th { background: #f0f0f0; padding: 8px; text-align: left; border: 1px solid #ddd; }
-        td { padding: 6px 8px; border: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12px; table-layout: fixed; }
+        th { background: #f0f0f0; padding: 8px; text-align: left; border: 1px solid #ddd; word-wrap: break-word; overflow-wrap: break-word; }
+        td { padding: 6px 8px; border: 1px solid #eee; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; vertical-align: top; }
         tr:nth-child(even) { background: #fafafa; }
+        /* Last column (e.g. Recommendation, Details) gets enough width so text wraps instead of cutting off */
+        table th:last-child, table td:last-child { width: 40%; }
         .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
         .badge.verified { background: #e8f5e9; color: #2e7d32; }
         .badge.discrepancy { background: #ffebee; color: #c62828; }

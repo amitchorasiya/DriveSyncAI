@@ -65,7 +65,7 @@ final class LlamaCppServerManager: ObservableObject {
             "-m", Self.modelURL.path,
             "--host", "127.0.0.1",
             "--port", "\(Self.port)",
-            "-c", "4096",
+            "-c", "8192",
             "-ngl", "-1",        // GPU layers: -1 = all (Metal on Apple Silicon)
             "--log-disable"      // suppress verbose output
         ]
