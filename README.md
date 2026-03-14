@@ -160,6 +160,7 @@ DriveSyncAI Buddy is an integrated side-drawer assistant that lives inside every
 | **Duplicates** | "Keep the newest copies" · "Select photos only" · "Select files > 10MB" |
 | **AI Organize** | "Group photos by month" · "Move invoices to Finance/2024" · "Exclude node_modules" |
 | **Ask My Docs** | "What were my total expenses?" · "List all income sources" · "Compare these documents" · "Summarize this contract" |
+| **Locate My Stuff** | "Where is my pen?" · "Where did I put my keys?" · "Show me the photo of my desk" |
 | **Settings** | "Recommend settings for me" · "How do I set up Ollama?" · "What does parallel I/O do?" |
 
 The Buddy adapts its context to whatever you're doing. During sync preview, it can select/deselect files by category, extension, folder, size, or date. During duplicate review, it applies smart selection strategies. During organization, it modifies your plan in real time with highlighted changes.
@@ -185,14 +186,29 @@ The AI modifies your plan in real time: adding moves, changing destinations, exc
 
 Point to any folder of documents and ask questions in natural language. The system extracts full text (with OCR for scanned documents), classifies the document domain, recommends the best AI model, and returns structured answers with source citations.
 
+- **Everyday Use Cases.** Specialized modes for common tasks:
+  - **Receipts:** Extract merchant, date, amount, and category. Detect duplicates and missing details.
+  - **Contracts:** Identify key terms, obligations, rights, and critical risks.
+  - **Insurance:** Analyze policy details, coverage limits, deductibles, and gaps.
+  - **Tax Review:** Compare draft returns against source documents for accuracy and savings.
 - **Multi-format extraction.** PDFs, scanned images (OCR), Word, Excel (XLSX), CSV, plain text.
-- **PII Protection.** SSNs, credit cards, bank accounts, and other sensitive data are automatically detected and redacted before reaching the AI model. Two sensitivity levels (Standard / Maximum). Luhn validation, SSN format checks, and keyword-proximity matching for high accuracy.
+- **Enhanced Privacy Protection.** PII (SSNs, names), PCI (credit cards), and PHI (medical info) are automatically detected and redacted before reaching the AI model. Two sensitivity levels (Standard / Maximum). Luhn validation, SSN format checks, and keyword-proximity matching for high accuracy.
 - **Smart Model Advisor.** Detects if your documents are financial, legal, medical, etc. and recommends the best Ollama or cloud model. Pull & Switch for Ollama; Install Ollama prompt when not installed.
 - **Document Cross-Reference.** Compare a primary document against source documents to highlight value differences, surface patterns, flag items that may need additional records, and compare versions year-over-year.
 - **Report generation.** Export results as PDF, CSV, or Markdown.
 - **Multi-folder sources.** Add multiple folders and drives as document sources.
 
 The chat works both **before scanning** (to set preferences) and **after scanning** (to refine the plan). Multi-turn conversation keeps context across messages so you can iterate naturally.
+
+### Locate My Stuff
+
+Never lose your physical items again.
+
+- **Capture:** Take a photo of an item (keys, wallet, passport) or pick from your library.
+- **Tag:** Optionally add a location tag (e.g. "Desk", "Living Room").
+- **AI Labeling:** The app uses Apple Vision to automatically label objects in the photo.
+- **Find:** Ask "Where is my pen?" or "Where are my keys?" to see matching photos with location and date.
+- **Local:** All photos and data are stored locally on your device. No cloud uploads.
 
 ### AI Engine: Zero Setup Required
 

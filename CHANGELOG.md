@@ -2,6 +2,32 @@
 
 All notable changes to DriveSyncAI will be documented in this file.
 
+## [1.6.1] - 2026-03-14
+
+### Added
+
+- **Enhanced Privacy Protection**: PII (Personally Identifiable Information), PHI (Protected Health Information), and PCI (Payment Card Industry) protection is now active across all document review features.
+  - **Receipts**: Automatically redacts credit card numbers and sensitive financial data.
+  - **Contracts**: Redacts names, SSNs, and personal identifiers.
+  - **Insurance**: Redacts policy numbers, names, and medical information.
+  - **Ask My Docs**: General Q&A now explicitly covers SSNs, credit cards, and medical info in its redaction engine.
+
+## [1.6.0] - 2026-03-14
+
+### Added
+
+- **Locate My Stuff**: New feature to track physical items. Take a photo of an item (e.g. keys, wallet), optionally tag a location (e.g. "Desk"), and the app uses Apple Vision to label it. Later, ask "Where is my pen?" to find it. All data stored locally on-device.
+- **Everyday Use Cases (Ask My Docs)**: Added dedicated modes for common document reviews:
+  - **Receipts**: Extract merchant, date, amount, and category from receipts.
+  - **Contract**: Identify key terms, obligations, rights, and critical risks in contracts.
+  - **Insurance**: Analyze policy details, coverage limits, deductibles, and gaps.
+- **Ask My Docs — Tabs**: New tab bar in Ask My Docs to switch between General Q&A, Tax Review, Receipts, Contract, and Insurance modes.
+
+### Changed
+
+- **Sidebar**: Added "Locate my stuff" to the sidebar.
+- **Version**: Bumped to 1.6.0.
+
 ## [1.5.0] - 2026-03-14
 
 ### Added

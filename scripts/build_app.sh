@@ -10,7 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 APP_NAME="DriveSyncAI"
 APP_BUNDLE="$PROJECT_DIR/dist/$APP_NAME.app"
-VERSION="1.5.0"
+VERSION="1.6.1"
 
 echo "=== Building DriveSyncAI $VERSION ==="
 

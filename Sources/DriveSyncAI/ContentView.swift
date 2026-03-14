@@ -46,6 +46,8 @@ struct ContentView: View {
                     AIOrganizeView()
                 case .askMyDocs:
                     AskMyDocsView()
+                case .locateMyStuff:
+                    LocateMyStuffView()
                 case .settings:
                     SettingsView()
                 case nil:

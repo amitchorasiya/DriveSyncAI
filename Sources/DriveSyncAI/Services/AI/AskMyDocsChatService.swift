@@ -12,11 +12,17 @@ final class AskMyDocsChatService: ObservableObject {
     @Published var lastError: String?
     @Published var lastInsightResult: InsightResult?
     @Published var lastTaxReviewResult: TaxReviewResult?
+    @Published var lastReceiptReviewResult: ReceiptReviewResult?
+    @Published var lastContractReviewResult: ContractReviewResult?
+    @Published var lastInsuranceReviewResult: InsuranceReviewResult?
     @Published var modelRecommendation: ModelRecommendation?
 
     private var conversationHistory: [(role: String, text: String)] = []
     private let modelAdvisor = ModelAdvisorService()
     private let taxReviewService = TaxReviewService()
+    private let receiptReviewService = ReceiptReviewService()
+    private let contractReviewService = ContractReviewService()
+    private let insuranceReviewService = InsuranceReviewService()
     private let maxHistoryTurns = 5
 
     // MARK: - Initialization
@@ -235,6 +241,147 @@ final class AskMyDocsChatService: ObservableObject {
         isLoading = false
     }
 
+    // MARK: - Receipt Review
+    
+    func runReceiptReview(
+        corpus: DocumentCorpus,
+        configManager: LLMConfigManager
+    ) async {
+        isLoading = true
+        lastError = nil
+        
+        messages.append(OrganizationChatMessage(
+            role: "system",
+            text: "Starting receipt review...",
+            isStatusMessage: true
+        ))
+        
+        do {
+            let result = try await receiptReviewService.reviewReceipts(
+                corpus: corpus,
+                configManager: configManager
+            )
+            
+            lastReceiptReviewResult = result
+            
+            var summary = "**Receipt Review Complete**\n\n"
+            summary += "Items: \(result.items.count) | Total: \(formatCurrency(result.totalAmount))\n"
+            
+            if !result.findings.isEmpty {
+                summary += "Findings: \(result.findings.count) items flagged\n"
+            }
+            
+            summary += "\nCheck the dashboard for details."
+            
+            messages.append(OrganizationChatMessage(role: "assistant", text: summary))
+            
+        } catch {
+            lastError = error.localizedDescription
+            messages.append(OrganizationChatMessage(
+                role: "system",
+                text: "Receipt review failed: \(error.localizedDescription)",
+                isStatusMessage: true
+            ))
+        }
+        
+        isLoading = false
+    }
+    
+    // MARK: - Contract Review
+    
+    func runContractReview(
+        corpus: DocumentCorpus,
+        configManager: LLMConfigManager
+    ) async {
+        isLoading = true
+        lastError = nil
+        
+        messages.append(OrganizationChatMessage(
+            role: "system",
+            text: "Starting contract review...",
+            isStatusMessage: true
+        ))
+        
+        do {
+            let result = try await contractReviewService.reviewContract(
+                corpus: corpus,
+                configManager: configManager
+            )
+            
+            lastContractReviewResult = result
+            
+            var summary = "**Contract Review Complete**\n\n"
+            summary += "Summary: \(result.summary)\n"
+            summary += "Key Terms: \(result.keyTerms.count) | Risks: \(result.criticalRisks.count)\n"
+            
+            summary += "\nCheck the dashboard for details."
+            
+            messages.append(OrganizationChatMessage(role: "assistant", text: summary))
+            
+        } catch {
+            lastError = error.localizedDescription
+            messages.append(OrganizationChatMessage(
+                role: "system",
+                text: "Contract review failed: \(error.localizedDescription)",
+                isStatusMessage: true
+            ))
+        }
+        
+        isLoading = false
+    }
+    
+    // MARK: - Insurance Review
+    
+    func runInsuranceReview(
+        corpus: DocumentCorpus,
+        configManager: LLMConfigManager
+    ) async {
+        isLoading = true
+        lastError = nil
+        
+        messages.append(OrganizationChatMessage(
+            role: "system",
+            text: "Starting insurance policy review...",
+            isStatusMessage: true
+        ))
+        
+        do {
+            let result = try await insuranceReviewService.reviewPolicy(
+                corpus: corpus,
+                configManager: configManager
+            )
+            
+            lastInsuranceReviewResult = result
+            
+            var summary = "**Insurance Review Complete**\n\n"
+            if let provider = result.provider {
+                summary += "Provider: \(provider)\n"
+            }
+            summary += "Coverages: \(result.coverages.count) | Gaps: \(result.gaps.count)\n"
+            
+            summary += "\nCheck the dashboard for details."
+            
+            messages.append(OrganizationChatMessage(role: "assistant", text: summary))
+            
+        } catch {
+            lastError = error.localizedDescription
+            messages.append(OrganizationChatMessage(
+                role: "system",
+                text: "Insurance review failed: \(error.localizedDescription)",
+                isStatusMessage: true
+            ))
+        }
+        
+        isLoading = false
+    }
+    
+    private func formatCurrency(_ amount: Decimal) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "USD"
+        return formatter.string(from: NSNumber(value: NSDecimalNumber(decimal: amount).doubleValue)) ?? "$0.00"
+    }
+
     // MARK: - Scan Notifications
 
     func notifyScanResult(successCount: Int, failedCount: Int) {
@@ -408,6 +555,9 @@ final class AskMyDocsChatService: ObservableObject {
         conversationHistory.removeAll()
         lastInsightResult = nil
         lastTaxReviewResult = nil
+        lastReceiptReviewResult = nil
+        lastContractReviewResult = nil
+        lastInsuranceReviewResult = nil
         lastError = nil
         addWelcomeMessage()
     }

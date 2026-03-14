@@ -9,6 +9,7 @@ enum NavigationItem: String, Hashable, CaseIterable {
     case duplicates
     case aiOrganize
     case askMyDocs
+    case locateMyStuff
     case settings
 
     var label: String {
@@ -18,6 +19,7 @@ enum NavigationItem: String, Hashable, CaseIterable {
         case .duplicates: return "Duplicates"
         case .aiOrganize: return "AI Organize"
         case .askMyDocs: return "Ask My Docs"
+        case .locateMyStuff: return "Locate my stuff"
         case .settings: return "Settings"
         }
     }
@@ -29,6 +31,7 @@ enum NavigationItem: String, Hashable, CaseIterable {
         case .duplicates: return "doc.on.doc"
         case .aiOrganize: return "brain.head.profile"
         case .askMyDocs: return "doc.text.magnifyingglass"
+        case .locateMyStuff: return "location.magnifyingglass"
         case .settings: return "gearshape"
         }
     }
@@ -40,6 +43,7 @@ enum NavigationItem: String, Hashable, CaseIterable {
         case .duplicates: return "3"
         case .aiOrganize: return "4"
         case .askMyDocs: return "5"
+        case .locateMyStuff: return "6"
         case .settings: return nil
         }
     }
@@ -79,7 +83,7 @@ struct SidebarView: View {
             }
 
             Section("Navigation") {
-                ForEach([NavigationItem.dashboard, .sync, .duplicates, .aiOrganize, .askMyDocs], id: \.self) { item in
+                ForEach([NavigationItem.dashboard, .sync, .duplicates, .aiOrganize, .askMyDocs, .locateMyStuff], id: \.self) { item in
                     NavigationLink(value: item) {
                         HStack(spacing: 0) {
                             Label(item.label, systemImage: item.icon)

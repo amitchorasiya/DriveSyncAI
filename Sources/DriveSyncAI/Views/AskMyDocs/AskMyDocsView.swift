@@ -7,11 +7,17 @@ import UniformTypeIdentifiers
 enum AskMyDocsTab: String, CaseIterable {
     case ask = "Ask"
     case taxReview = "Tax Review"
+    case receipts = "Receipts"
+    case contract = "Contract"
+    case insurance = "Insurance"
 
     var icon: String {
         switch self {
         case .ask: return "bubble.left.and.text.bubble.right"
         case .taxReview: return "doc.text.magnifyingglass"
+        case .receipts: return "receipt"
+        case .contract: return "signature"
+        case .insurance: return "shield.checkerboard"
         }
     }
 }
@@ -60,6 +66,24 @@ struct AskMyDocsView: View {
                         askModeContent
                     case .taxReview:
                         TaxReviewView(
+                            insightService: insightService,
+                            chatService: chatService,
+                            configManager: configManager
+                        )
+                    case .receipts:
+                        ReceiptReviewView(
+                            insightService: insightService,
+                            chatService: chatService,
+                            configManager: configManager
+                        )
+                    case .contract:
+                        ContractReviewView(
+                            insightService: insightService,
+                            chatService: chatService,
+                            configManager: configManager
+                        )
+                    case .insurance:
+                        InsuranceReviewView(
                             insightService: insightService,
                             chatService: chatService,
                             configManager: configManager
@@ -187,7 +211,7 @@ struct AskMyDocsView: View {
                     Text("PII Protection")
                         .font(.subheadline.bold())
                     Text(insightService.piiProtectionEnabled
-                         ? "SSNs, account numbers, and other sensitive data are automatically redacted before reaching the AI model."
+                         ? "SSNs, credit cards (PCI), medical info (PHI), and other sensitive data are automatically redacted before reaching the AI model."
                          : "PII protection is OFF. Sensitive data may be sent to the AI provider.")
                         .font(.caption)
                         .foregroundStyle(Color.dsSecondaryText)
