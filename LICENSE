@@ -1,0 +1,121 @@
+Business Source License 1.1
+
+Parameters
+
+Licensor:             Amit Chorasiya
+Licensed Work:        DriveSyncAI 1.0.0
+                      Copyright 2026 Amit Chorasiya. All rights reserved.
+Additional Use Grant: You may use the Licensed Work for non-production purposes
+                      including personal use, educational use, evaluation,
+                      development, and testing. Production use or commercial
+                      distribution of the Licensed Work requires a separate
+                      commercial license from the Licensor. Contact the Licensor
+                      for commercial licensing inquiries.
+Change Date:          February 28, 2030
+Change License:       Apache License, Version 2.0
+
+For information about alternative licensing arrangements for the Licensed Work,
+please contact the Licensor.
+
+Notice
+
+Business Source License 1.1
+
+Terms
+
+The Licensor hereby grants you the right to copy, modify, create derivative
+works, redistribute, and make non-production use of the Licensed Work. The
+Licensor may make an Additional Use Grant, above, permitting limited production
+use.
+
+Effective on the Change Date, or the fourth anniversary of the first publicly
+available distribution of a specific version of the Licensed Work under this
+License, whichever comes first, the Licensor hereby grants you rights under the
+terms of the Change License, and the rights granted in the paragraph above
+terminate.
+
+If your use of the Licensed Work does not comply with the requirements currently
+in effect as described in this License, you must purchase a commercial license
+from the Licensor, its affiliated entities, or authorized resellers, or you must
+refrain from using the Licensed Work.
+
+All copies of the original and modified Licensed Work, and derivative works of
+the Licensed Work, are subject to this License. This License applies separately
+for each version of the Licensed Work and the Change Date may vary for each
+version of the Licensed Work released by Licensor.
+
+You must conspicuously display this License on each original or modified copy of
+the Licensed Work. If you receive the Licensed Work in original or modified form
+from a third party, the terms and conditions set forth in this License apply to
+your use of that work.
+
+Any use of the Licensed Work in violation of this License will automatically
+terminate your rights under this License for the current and all other versions
+of the Licensed Work.
+
+This License does not grant you any right in any trademark or logo of Licensor
+or its affiliates (provided that you may use a trademark or logo of Licensor as
+expressly required by this License).
+
+TO THE EXTENT PERMITTED BY APPLICABLE LAW, THE LICENSED WORK IS PROVIDED ON AN
+"AS IS" BASIS. LICENSOR HEREBY DISCLAIMS ALL WARRANTIES AND CONDITIONS, EXPRESS
+OR IMPLIED, INCLUDING (WITHOUT LIMITATION) WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, AND TITLE.
+
+LIMITATION OF LIABILITY
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL THE
+LICENSOR, ITS AFFILIATES, OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; LOSS OF GOODWILL; BUSINESS INTERRUPTION; OR ANY OTHER COMMERCIAL
+DAMAGES OR LOSSES) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+IN ANY WAY OUT OF THE USE OF THE LICENSED WORK, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGES.
+
+ASSUMPTION OF RISK FOR FILE OPERATIONS
+
+YOU ACKNOWLEDGE THAT THIS SOFTWARE PERFORMS FILE SYNCHRONIZATION, DUPLICATE
+MANAGEMENT, AND AI-POWERED FILE ORGANIZATION OPERATIONS THAT MAY MODIFY, MOVE,
+RENAME, OR DELETE FILES ON YOUR STORAGE DEVICES. YOU ASSUME ALL RISK AND
+RESPONSIBILITY FOR ANY DATA LOSS, DATA CORRUPTION, FILE MISPLACEMENT, INCORRECT
+RENAMING, HARDWARE DAMAGE, OR OTHER HARM RESULTING FROM THE USE OF THIS
+SOFTWARE. THE LICENSOR SHALL NOT BE HELD LIABLE FOR ANY SUCH LOSS OR DAMAGE
+UNDER ANY CIRCUMSTANCES.
+
+AI-POWERED FEATURES DISCLAIMER
+
+THIS SOFTWARE INCLUDES OPTIONAL ARTIFICIAL INTELLIGENCE FEATURES THAT USE LARGE
+LANGUAGE MODELS (LLMs) TO GENERATE FILE ORGANIZATION, CATEGORIZATION, AND
+RENAMING SUGGESTIONS. THESE SUGGESTIONS ARE PRODUCED BY MACHINE LEARNING MODELS
+AND MAY BE INACCURATE, INCOMPLETE, OR INAPPROPRIATE. THE LICENSOR MAKES NO
+REPRESENTATIONS OR WARRANTIES REGARDING THE ACCURACY, RELIABILITY, OR
+COMPLETENESS OF ANY AI-GENERATED SUGGESTIONS.
+
+YOU ARE SOLELY RESPONSIBLE FOR REVIEWING AND APPROVING ALL AI-GENERATED
+SUGGESTIONS BEFORE THEY ARE EXECUTED. THE LICENSOR SHALL NOT BE LIABLE FOR ANY
+DATA LOSS, DATA CORRUPTION, FILE MISPLACEMENT, INCORRECT RENAMING, OR OTHER HARM
+RESULTING FROM THE EXECUTION OF AI-GENERATED SUGGESTIONS, WHETHER OR NOT YOU
+REVIEWED SUCH SUGGESTIONS PRIOR TO EXECUTION.
+
+DRIVESYNCAI DOES NOT USE YOUR FILE DATA TO TRAIN AI MODELS. AI FEATURES ANALYZE
+FILE METADATA (SUCH AS FILE NAMES, PATHS, SIZES, TYPES, AND DOCUMENT PROPERTIES)
+TO GENERATE SUGGESTIONS. ACTUAL FILE CONTENTS ARE NOT READ, ANALYZED, OR
+TRANSMITTED FOR AI PROCESSING.
+
+THIRD-PARTY SERVICE DISCLOSURE
+
+WHEN CONFIGURED TO USE CLOUD-BASED LLM PROVIDERS (INCLUDING BUT NOT LIMITED TO
+OPENAI, ANTHROPIC, GOOGLE, AND PERPLEXITY), THIS SOFTWARE TRANSMITS FILE METADATA
+(INCLUDING BUT NOT LIMITED TO FILE NAMES, FILE PATHS, FILE SIZES, FILE TYPES,
+DOCUMENT METADATA, AND EXIF DATA) TO THIRD-PARTY SERVERS OPERATED BY THOSE
+PROVIDERS. ACTUAL FILE CONTENTS ARE NOT TRANSMITTED. WHEN CONFIGURED TO USE LOCAL
+PROVIDERS (SUCH AS OLLAMA), ALL PROCESSING OCCURS ENTIRELY ON YOUR DEVICE AND NO
+DATA IS TRANSMITTED TO EXTERNAL SERVICES.
+
+YOUR USE OF THIRD-PARTY LLM SERVICES IS SUBJECT TO THE TERMS OF SERVICE AND
+PRIVACY POLICIES OF THOSE RESPECTIVE PROVIDERS. THE LICENSOR IS NOT RESPONSIBLE
+FOR THE DATA HANDLING PRACTICES OF THIRD-PARTY SERVICE PROVIDERS. YOU ARE SOLELY
+RESPONSIBLE FOR ENSURING YOUR USE OF SUCH SERVICES COMPLIES WITH APPLICABLE LAWS
+AND REGULATIONS, INCLUDING DATA PROTECTION AND PRIVACY LAWS.

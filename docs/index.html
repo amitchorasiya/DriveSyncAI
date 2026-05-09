@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DriveSyncAI: AI-Powered Drive Manager for macOS</title>
+  <meta name="description" content="Sync, deduplicate, and organize your files with AI. Native macOS app. Privacy-first. Free for personal use.">
+  <meta name="keywords" content="macOS, drive sync, file organizer, duplicate finder, AI, local AI, llama.cpp, no install required">
+  <meta name="author" content="Amit Chorasiya">
+  <meta property="og:title" content="DriveSyncAI: AI-Powered Drive Manager for macOS">
+  <meta property="og:description" content="Sync, deduplicate, and organize your files with AI. Native macOS. Privacy-first. Free.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="images/dashboard_buddy.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Particle Canvas -->
+  <canvas id="particles"></canvas>
+
+  <!-- Navigation -->
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">
+        <div class="logo-icon">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <defs>
+              <linearGradient id="brain-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#a855f7"/>
+                <stop offset="100%" style="stop-color:#6366f1"/>
+              </linearGradient>
+            </defs>
+            <circle cx="14" cy="14" r="13" stroke="url(#brain-grad)" stroke-width="2" fill="none"/>
+            <path d="M10 8c0-1 1-2 2.5-2s2.5 1 2.5 2c0 .8-.5 1.5-1.2 1.8.7.3 1.7 1 1.7 2.2 0 1.5-1.2 2.5-3 2.5s-3-1-3-2.5c0-1.2 1-1.9 1.7-2.2C10.5 9.5 10 8.8 10 8z" fill="url(#brain-grad)" opacity="0.8"/>
+            <path d="M15.5 8c0-1 1-2 2.5-2s2.5 1 2.5 2c0 .8-.5 1.5-1.2 1.8.7.3 1.7 1 1.7 2.2 0 1.5-1.2 2.5-3 2.5s-3-1-3-2.5c0-1.2 1-1.9 1.7-2.2-.7-.3-1.2-1-1.2-1.8z" fill="url(#brain-grad)" opacity="0.6"/>
+            <circle cx="9" cy="18" r="1.5" fill="url(#brain-grad)" opacity="0.5"/>
+            <circle cx="14" cy="20" r="1.5" fill="url(#brain-grad)" opacity="0.7"/>
+            <circle cx="19" cy="18" r="1.5" fill="url(#brain-grad)" opacity="0.5"/>
+            <line x1="9" y1="18" x2="14" y2="20" stroke="url(#brain-grad)" stroke-width="0.5" opacity="0.4"/>
+            <line x1="14" y1="20" x2="19" y2="18" stroke="url(#brain-grad)" stroke-width="0.5" opacity="0.4"/>
+          </svg>
+        </div>
+        <span class="logo-text">DriveSyncAI</span>
+      </a>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#ai">AI Engine</a>
+        <a href="#safety">Safety</a>
+        <a href="#screenshots">Screenshots</a>
+        <a href="#download" class="nav-cta">Download Free</a>
+      </div>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#features">Features</a>
+    <a href="#ai">AI Engine</a>
+    <a href="#safety">Safety</a>
+    <a href="#screenshots">Screenshots</a>
+    <a href="#download" class="nav-cta">Download Free</a>
+  </div>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-glow hero-glow-2"></div>
+    <div class="hero-content">
+      <div class="hero-badge reveal">
+        <span class="badge-dot"></span>
+        macOS 14+ &middot; Native Swift &middot; Zero Dependencies
+      </div>
+      <h1 class="hero-title reveal">
+        <span class="gradient-text">AI-Powered</span><br>
+        Drive Management
+      </h1>
+      <p class="hero-subtitle reveal">
+        Sync smarter. Find duplicates instantly. An AI buddy on every screen to help you manage files in plain English.<br>
+        Privacy-first: your data never leaves your Mac.
+      </p>
+      <div class="hero-actions reveal">
+        <a href="#download" class="btn btn-primary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download for macOS
+        </a>
+        <a href="https://github.com/amitchorasiya/DriveSyncAI" class="btn btn-secondary" target="_blank" rel="noopener">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          View Source
+        </a>
+      </div>
+      <div class="hero-stats reveal">
+        <div class="stat">
+          <span class="stat-value">75+</span>
+          <span class="stat-label">AI Models</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-value">5</span>
+          <span class="stat-label">LLM Providers</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-value">0</span>
+          <span class="stat-label">External Deps</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-value">$0</span>
+          <span class="stat-label">Forever</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-image reveal">
+      <div class="hero-image-glow"></div>
+      <div class="hero-image-frame">
+        <img src="images/dashboard_buddy.png" alt="DriveSyncAI Dashboard with AI Buddy" loading="eager">
+      </div>
+    </div>
+  </section>
+
+  <!-- Marquee -->
+  <section class="marquee-section">
+    <div class="marquee-track">
+      <div class="marquee-content">
+        <span>INTELLIGENT SYNC</span>
+        <span class="marquee-dot"></span>
+        <span>DUPLICATE FINDER</span>
+        <span class="marquee-dot"></span>
+        <span>AI ORGANIZATION</span>
+        <span class="marquee-dot"></span>
+        <span>SMART PREFERENCES</span>
+        <span class="marquee-dot"></span>
+        <span>DRIVESYNCAI BUDDY</span>
+        <span class="marquee-dot"></span>
+        <span>INTERACTIVE AI CHAT</span>
+        <span class="marquee-dot"></span>
+        <span>WRITE-AHEAD JOURNAL</span>
+        <span class="marquee-dot"></span>
+        <span>LOCAL AI</span>
+        <span class="marquee-dot"></span>
+        <span>PRIVACY FIRST</span>
+        <span class="marquee-dot"></span>
+        <span>ZERO DEPENDENCIES</span>
+        <span class="marquee-dot"></span>
+        <span>APFS CLONEFILE</span>
+        <span class="marquee-dot"></span>
+        <span>INTELLIGENT SYNC</span>
+        <span class="marquee-dot"></span>
+        <span>DUPLICATE FINDER</span>
+        <span class="marquee-dot"></span>
+        <span>AI ORGANIZATION</span>
+        <span class="marquee-dot"></span>
+        <span>SMART PREFERENCES</span>
+        <span class="marquee-dot"></span>
+        <span>DRIVESYNCAI BUDDY</span>
+        <span class="marquee-dot"></span>
+        <span>INTERACTIVE AI CHAT</span>
+        <span class="marquee-dot"></span>
+        <span>WRITE-AHEAD JOURNAL</span>
+        <span class="marquee-dot"></span>
+        <span>LOCAL AI</span>
+        <span class="marquee-dot"></span>
+        <span>PRIVACY FIRST</span>
+        <span class="marquee-dot"></span>
+        <span>ZERO DEPENDENCIES</span>
+        <span class="marquee-dot"></span>
+        <span>APFS CLONEFILE</span>
+        <span class="marquee-dot"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-tag">FEATURES</span>
+        <h2 class="section-title">Everything you need.<br><span class="gradient-text">Nothing you don't.</span></h2>
+        <p class="section-desc">Three powerful tools, unified by a safety-first architecture that never loses a file.</p>
+      </div>
+
+      <div class="features-grid">
+        <!-- Sync -->
+        <div class="feature-card feature-card-large reveal">
+          <div class="feature-card-glow"></div>
+          <div class="feature-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </div>
+          <h3>Intelligent Sync</h3>
+          <p>Mirror, update, or bidirectional sync with conflict resolution. Preview every change before execution. Filter rules skip junk automatically.</p>
+          <div class="feature-tags">
+            <span>Mirror Mode</span>
+            <span>Bidirectional</span>
+            <span>Sync Profiles</span>
+            <span>Versioning</span>
+          </div>
+        </div>
+
+        <!-- Duplicates -->
+        <div class="feature-card reveal">
+          <div class="feature-card-glow"></div>
+          <div class="feature-icon icon-cyan">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="13" height="13" rx="2"/><path d="M4 8H2a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2"/><line x1="14.5" y1="5.5" x2="11.5" y2="5.5"/><line x1="14.5" y1="8.5" x2="11.5" y2="8.5"/></svg>
+          </div>
+          <h3>Duplicate Finder</h3>
+          <p>Quick, Smart, or Deep scanning. SHA256 verification catches every copy. Safe move preserves folder structure with full undo.</p>
+          <div class="feature-tags">
+            <span>Quick Scan</span>
+            <span>SHA256 Deep</span>
+            <span>Full Undo</span>
+          </div>
+        </div>
+
+        <!-- AI Organize -->
+        <div class="feature-card reveal">
+          <div class="feature-card-glow"></div>
+          <div class="feature-icon icon-purple">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          </div>
+          <h3>AI Organization</h3>
+          <p>Guided wizard configures folder structure, naming, and cleanup. After scanning, an interactive AI chatbot refines your plan in real time: add moves, change destinations, exclude files, all in plain English.</p>
+          <div class="feature-tags">
+            <span>Preferences Wizard</span>
+            <span>Interactive AI Chat</span>
+            <span>Live Plan Editing</span>
+            <span>3-Tier Pipeline</span>
+            <span>Custom Rules</span>
+          </div>
+        </div>
+
+        <!-- Locate My Stuff -->
+        <div class="feature-card reveal">
+          <div class="feature-card-glow"></div>
+          <div class="feature-icon icon-orange">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v3h3"/></svg>
+          </div>
+          <h3>Locate My Stuff</h3>
+          <p>Never lose your keys again. Take a photo, tag a place, and let AI label it. Ask "Where is my pen?" to find it instantly. All local.</p>
+          <div class="feature-tags">
+            <span>Visual Search</span>
+            <span>Local Vision</span>
+            <span>Place Tagging</span>
+          </div>
+        </div>
+
+        <!-- Ask My Docs -->
+        <div class="feature-card feature-card-large reveal">
+          <div class="feature-card-glow"></div>
+          <div class="feature-icon icon-blue">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          </div>
+          <h3>Ask My Docs</h3>
+          <p>Chat with your documents. Extract insights from PDFs, Receipts, Contracts, and Insurance policies. Specialized modes for Tax Review and more.</p>
+          <div class="feature-tags">
+            <span>Receipts & Expenses</span>
+            <span>Contract Review</span>
+            <span>Insurance Analysis</span>
+            <span>PII/PCI/PHI Protection</span>
+          </div>
+        </div>
+
+        <!-- DriveSyncAI Buddy -->
+        <div class="feature-card feature-card-large reveal">
+          <div class="feature-card-glow"></div>
+          <div class="feature-icon icon-purple">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h2"/><path d="M14 9h2"/><path d="M9 13c.6.9 1.6 1.5 3 1.5s2.4-.6 3-1.5"/></svg>
+          </div>
+          <h3>DriveSyncAI Buddy</h3>
+          <p>An AI assistant that lives on every screen. Ask it anything: sync setup tips, scan configuration, duplicate selection, file organization. Use natural language to control actions: "sync only photos," "select duplicates larger than 10MB," "move invoices to Finance." Always present, always context-aware.</p>
+          <div class="feature-tags">
+            <span>Every Tab</span>
+            <span>Natural Language</span>
+            <span>Context-Aware</span>
+            <span>Action Control</span>
+            <span>Apply &amp; Undo</span>
+          </div>
+        </div>
+
+        <!-- Performance -->
+        <div class="feature-card reveal">
+          <div class="feature-card-glow"></div>
+          <div class="feature-icon icon-orange">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <h3>Blazing Performance</h3>
+          <p>Memory-mapped hashing for large files. APFS clonefile for instant same-volume copies. Adaptive I/O tuned per drive type.</p>
+          <div class="feature-tags">
+            <span>mmap I/O</span>
+            <span>APFS Clone</span>
+            <span>Parallel I/O</span>
+          </div>
+        </div>
+
+        <!-- Privacy -->
+        <div class="feature-card reveal">
+          <div class="feature-card-glow"></div>
+          <div class="feature-icon icon-green">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+          </div>
+          <h3>Privacy First</h3>
+          <p>AI runs on your Mac via a built-in engine. No Ollama, no Python, no installs. File contents never leave your device. Cloud providers only receive compact metadata summaries.</p>
+          <div class="feature-tags">
+            <span>Built-in AI</span>
+            <span>Keychain Storage</span>
+            <span>No Telemetry</span>
+          </div>
+        </div>
+
+        <!-- Native -->
+        <div class="feature-card reveal">
+          <div class="feature-card-glow"></div>
+          <div class="feature-icon icon-pink">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <h3>Native macOS</h3>
+          <p>Built with SwiftUI and zero external dependencies. Uses system frameworks, Keychain, and APFS. Feels like it belongs on your Mac.</p>
+          <div class="feature-tags">
+            <span>SwiftUI</span>
+            <span>Swift 5.9</span>
+            <span>Zero Deps</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI Engine Section -->
+  <section class="ai-section" id="ai">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-tag">AI ENGINE</span>
+        <h2 class="section-title">Three tiers of intelligence.<br><span class="gradient-text">One seamless pipeline.</span></h2>
+        <p class="section-desc">85% of files organized without a single AI token. Only ambiguous files reach the LLM, as metadata, never contents.</p>
+      </div>
+
+      <div class="pipeline reveal">
+        <div class="pipeline-tier">
+          <div class="tier-header">
+            <div class="tier-number">01</div>
+            <div class="tier-badge tier-badge-green">60% of files</div>
+          </div>
+          <h3>Rules Engine</h3>
+          <p>Extension mapping, clutter detection, and your custom rules. Instant results, zero tokens, zero network calls.</p>
+          <div class="tier-bar" style="--width: 60%">
+            <div class="tier-bar-fill tier-bar-green"></div>
+          </div>
+        </div>
+
+        <div class="pipeline-arrow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
+
+        <div class="pipeline-tier">
+          <div class="tier-header">
+            <div class="tier-number">02</div>
+            <div class="tier-badge tier-badge-blue">25% of files</div>
+          </div>
+          <h3>Metadata Enrichment</h3>
+          <p>EXIF dates, PDF titles, Spotlight attributes. Deep context extraction without touching file contents.</p>
+          <div class="tier-bar" style="--width: 25%">
+            <div class="tier-bar-fill tier-bar-blue"></div>
+          </div>
+        </div>
+
+        <div class="pipeline-arrow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
+
+        <div class="pipeline-tier">
+          <div class="tier-header">
+            <div class="tier-number">03</div>
+            <div class="tier-badge tier-badge-purple">15% of files</div>
+          </div>
+          <h3>AI Brain + Chat</h3>
+          <p>Compact metadata summaries sent to your chosen LLM. After analysis, an interactive chat lets you refine the plan conversationally. The AI modifies moves, destinations, and preferences in real time.</p>
+          <div class="tier-bar" style="--width: 15%">
+            <div class="tier-bar-fill tier-bar-purple"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Provider Grid -->
+      <div class="providers reveal">
+        <h3 class="providers-title">Bring Your Own AI</h3>
+        <div class="providers-grid">
+          <div class="provider-card">
+            <div class="provider-icon">⚡</div>
+            <div class="provider-name">Built-in Engine</div>
+            <div class="provider-desc">llama.cpp · No install needed</div>
+            <span class="provider-badge provider-badge-green">Default</span>
+          </div>
+          <div class="provider-card">
+            <div class="provider-icon">🦙</div>
+            <div class="provider-name">Ollama</div>
+            <div class="provider-desc">100% local · 75+ models</div>
+          </div>
+          <div class="provider-card">
+            <div class="provider-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            </div>
+            <div class="provider-name">OpenAI</div>
+            <div class="provider-desc">GPT-4o &amp; more</div>
+          </div>
+          <div class="provider-card">
+            <div class="provider-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 19h20L12 2z"/></svg>
+            </div>
+            <div class="provider-name">Anthropic</div>
+            <div class="provider-desc">Claude models</div>
+          </div>
+          <div class="provider-card">
+            <div class="provider-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 15,9 22,9 16,14 18,22 12,17 6,22 8,14 2,9 9,9"/></svg>
+            </div>
+            <div class="provider-name">Google Gemini</div>
+            <div class="provider-desc">Gemini Pro</div>
+          </div>
+          <div class="provider-card">
+            <div class="provider-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="4" r="2"/><circle cx="12" cy="20" r="2"/><circle cx="4" cy="12" r="2"/><circle cx="20" cy="12" r="2"/></svg>
+            </div>
+            <div class="provider-name">Perplexity</div>
+            <div class="provider-desc">Search-augmented</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Safety Section -->
+  <section class="safety-section" id="safety">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-tag">SAFETY ARCHITECTURE</span>
+        <h2 class="section-title">Built by someone who<br><span class="gradient-text">lost files to a sync tool.</span></h2>
+        <p class="section-desc">Every operation goes through a multi-layer safety pipeline. Your files are never at risk.</p>
+      </div>
+
+      <div class="safety-grid">
+        <div class="safety-card reveal">
+          <div class="safety-number">01</div>
+          <h4>Write-Ahead Journal</h4>
+          <p>Every operation logged before execution. Survives crashes and power failures.</p>
+        </div>
+        <div class="safety-card reveal">
+          <div class="safety-number">02</div>
+          <h4>SHA256 Verification</h4>
+          <p>Hash comparison after every write catches silent corruption before it's too late.</p>
+        </div>
+        <div class="safety-card reveal">
+          <div class="safety-number">03</div>
+          <h4>Backup Before Overwrite</h4>
+          <p>Original files preserved as APFS copy-on-write clones before any modification.</p>
+        </div>
+        <div class="safety-card reveal">
+          <div class="safety-number">04</div>
+          <h4>Automatic Rollback</h4>
+          <p>Failed operations reversed completely. Journal replayed in reverse order.</p>
+        </div>
+        <div class="safety-card reveal">
+          <div class="safety-number">05</div>
+          <h4>Protected Paths</h4>
+          <p>System directories blocked. Delete threshold prevents mass-deletion accidents.</p>
+        </div>
+        <div class="safety-card reveal">
+          <div class="safety-number">06</div>
+          <h4>Dry-Run Mode</h4>
+          <p>Preview the full execution plan without touching a single file on disk.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Screenshots Section -->
+  <section class="screenshots-section" id="screenshots">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-tag">IN ACTION</span>
+        <h2 class="section-title">See it in action.<br><span class="gradient-text">Every pixel, intentional.</span></h2>
+      </div>
+
+      <div class="screenshot-gallery">
+        <div class="screenshot-tabs reveal">
+          <button class="screenshot-tab active" data-target="ss-buddy">AI Buddy</button>
+          <button class="screenshot-tab" data-target="ss-dashboard">Dashboard</button>
+          <button class="screenshot-tab" data-target="ss-sync">Sync</button>
+          <button class="screenshot-tab" data-target="ss-duplicates">Duplicates</button>
+          <button class="screenshot-tab" data-target="ss-ai">AI Organize</button>
+          <button class="screenshot-tab" data-target="ss-docs">Ask My Docs</button>
+          <button class="screenshot-tab" data-target="ss-settings">Settings</button>
+          <button class="screenshot-tab" data-target="ss-llm">LLM Settings</button>
+          <button class="screenshot-tab" data-target="ss-models">Model Browser</button>
+        </div>
+
+        <div class="screenshot-viewer reveal">
+          <div class="screenshot-frame">
+            <div class="screenshot-dots">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="screenshot-images">
+              <img id="ss-buddy" class="screenshot-img active" src="images/dashboard_buddy.png" alt="DriveSyncAI Buddy, integrated AI assistant" loading="lazy">
+              <img id="ss-dashboard" class="screenshot-img" src="images/dashboard.png" alt="Dashboard" loading="lazy">
+              <img id="ss-sync" class="screenshot-img" src="images/sync.png" alt="Sync" loading="lazy">
+              <img id="ss-duplicates" class="screenshot-img" src="images/duplicates.png" alt="Duplicates" loading="lazy">
+              <img id="ss-ai" class="screenshot-img" src="images/ai_organize.png" alt="AI Organize" loading="lazy">
+              <img id="ss-docs" class="screenshot-img" src="images/ask_my_docs.png" alt="Ask My Docs, document Q&A and cross-reference" loading="lazy">
+              <img id="ss-settings" class="screenshot-img" src="images/settings.png" alt="Settings" loading="lazy">
+              <img id="ss-llm" class="screenshot-img" src="images/llm_settings.png" alt="LLM Settings" loading="lazy">
+              <img id="ss-models" class="screenshot-img" src="images/ollama_models.png" alt="Ollama Model Browser" loading="lazy">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison Table -->
+  <section class="comparison-section">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-tag">COMPARISON</span>
+        <h2 class="section-title"><span class="gradient-text">Why DriveSyncAI?</span></h2>
+      </div>
+
+      <div class="comparison-table reveal">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Other Tools</th>
+              <th class="highlight-col">DriveSyncAI</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="row-label">Sync</td>
+              <td>Blind copy, hope for the best</td>
+              <td class="highlight-col">Preview, journal, verify with SHA256</td>
+            </tr>
+            <tr>
+              <td class="row-label">Duplicates</td>
+              <td>Find &amp; delete, hope nothing breaks</td>
+              <td class="highlight-col">Safe move, full undo, paths preserved</td>
+            </tr>
+            <tr>
+              <td class="row-label">Organization</td>
+              <td>Manual drag-and-drop for hours</td>
+              <td class="highlight-col">DriveSyncAI Buddy on every screen. Chat in plain English to organize, sync, and deduplicate.</td>
+            </tr>
+            <tr>
+              <td class="row-label">Safety</td>
+              <td>"Are you sure?" dialog</td>
+              <td class="highlight-col">Write-ahead journal, verify, rollback</td>
+            </tr>
+            <tr>
+              <td class="row-label">Privacy</td>
+              <td>Upload files to their cloud</td>
+              <td class="highlight-col">AI runs locally. Nothing leaves your Mac.</td>
+            </tr>
+            <tr>
+              <td class="row-label">Cost</td>
+              <td>$9.99/month forever</td>
+              <td class="highlight-col">Free for personal use. No subscription.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Download Section -->
+  <section class="download-section" id="download">
+    <div class="container">
+      <div class="download-card reveal">
+        <div class="download-glow"></div>
+        <div class="download-content">
+          <h2>Ready to take control<br>of your drives?</h2>
+          <p>Free for personal and educational use. No subscription. No account required. No telemetry.</p>
+          <div class="download-actions">
+            <a href="https://github.com/amitchorasiya/DriveSyncAI/releases/download/v1.6.1/DriveSyncAI-1.6.1.dmg" class="btn btn-primary btn-large" target="_blank" rel="noopener">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download DMG Installer
+            </a>
+            <a href="https://github.com/amitchorasiya/DriveSyncAI" class="btn btn-secondary btn-large" target="_blank" rel="noopener">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+              Build from Source
+            </a>
+          </div>
+          <div class="download-meta">
+            <span>macOS 14+ (Sonoma)</span>
+            <span class="download-meta-dot"></span>
+            <span>~5 MB DMG</span>
+            <span class="download-meta-dot"></span>
+            <span>Swift 5.9</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Start -->
+      <div class="quickstart reveal">
+        <h3>Quick Start</h3>
+        <div class="code-block">
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn" data-copy="git clone https://github.com/amitchorasiya/DriveSyncAI.git && cd DriveSyncAI && swift build && swift run">Copy</button>
+          </div>
+          <pre><code><span class="code-comment"># Clone and run</span>
+git clone https://github.com/amitchorasiya/DriveSyncAI.git
+cd DriveSyncAI
+swift build && swift run
+
+<span class="code-comment"># AI is built-in. No Ollama, no extra setup needed.</span>
+<span class="code-comment"># Accept the AI disclaimer in-app and it downloads everything automatically</span></code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <div class="nav-logo">
+            <div class="logo-icon">
+              <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
+                <circle cx="14" cy="14" r="13" stroke="url(#brain-grad)" stroke-width="2" fill="none"/>
+                <circle cx="10" cy="10" r="2" fill="url(#brain-grad)" opacity="0.7"/>
+                <circle cx="18" cy="10" r="2" fill="url(#brain-grad)" opacity="0.7"/>
+                <circle cx="14" cy="17" r="2" fill="url(#brain-grad)" opacity="0.7"/>
+                <line x1="10" y1="10" x2="18" y2="10" stroke="url(#brain-grad)" stroke-width="0.8" opacity="0.4"/>
+                <line x1="10" y1="10" x2="14" y2="17" stroke="url(#brain-grad)" stroke-width="0.8" opacity="0.4"/>
+                <line x1="18" y1="10" x2="14" y2="17" stroke="url(#brain-grad)" stroke-width="0.8" opacity="0.4"/>
+              </svg>
+            </div>
+            <span class="logo-text">DriveSyncAI</span>
+          </div>
+          <p>Sync smarter. Organize with AI. Sleep well.</p>
+        </div>
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4>Product</h4>
+            <a href="#features">Features</a>
+            <a href="#ai">AI Engine</a>
+            <a href="#safety">Safety</a>
+            <a href="#screenshots">Screenshots</a>
+          </div>
+          <div class="footer-col">
+            <h4>Resources</h4>
+            <a href="https://github.com/amitchorasiya/DriveSyncAI" target="_blank" rel="noopener">GitHub</a>
+            <a href="https://github.com/amitchorasiya/DriveSyncAI/releases" target="_blank" rel="noopener">Releases</a>
+            <a href="https://github.com/amitchorasiya/DriveSyncAI/issues" target="_blank" rel="noopener">Report Bug</a>
+          </div>
+          <div class="footer-col">
+            <h4>Legal</h4>
+            <a href="https://github.com/amitchorasiya/DriveSyncAI/blob/main/LICENSE" target="_blank" rel="noopener">License (BSL 1.1)</a>
+            <a href="https://github.com/amitchorasiya/DriveSyncAI/blob/main/NOTICE" target="_blank" rel="noopener">Notice</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Amit Chorasiya. All rights reserved. DriveSyncAI is a trademark of Amit Chorasiya.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
